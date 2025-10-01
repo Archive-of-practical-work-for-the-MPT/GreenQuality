@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GreenQuality Airlines{% endblock %}</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <!-- Шапка с эффектом мутного стекла -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <img src="{% static 'images/logo.png' %}" alt="GreenQuality Airlines Logo" style="height: 40px; margin-right: 15px; vertical-align: middle;">
+                <h1 style="display: inline-block; vertical-align: middle;">GreenQuality Airlines</h1>
+            </div>
+            <nav class="navigation">
+                <ul>
+                    <li><a href="#">Главная</a></li>
+                    <li><a href="#">О нас</a></li>
+                    <li><a href="#">Рейсы</a></li>
+                    <li><a href="#">Контакты</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Основное содержимое -->
+    <main class="main-content">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <!-- Футер -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>GreenQuality Airlines</h3>
+                    <p>Ваш надежный партнер в мире воздушных путешествий.</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Контакты</h4>
+                    <p>Email: info@greenquality.ru</p>
+                    <p>Телефон: +7 (495) 123-45-67</p>
+                </div>
+                <div class="footer-section">
+                    <h4>Следите за нами</h4>
+                    <div class="social-links">
+                        <a href="#" class="social-icon">VK</a>
+                        <a href="#" class="social-icon">Telegram</a>
+                        <a href="#" class="social-icon">MAX</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 GreenQuality Airlines. Все права защищены.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- JavaScript для интерактивных элементов -->
+    <script>
+        // Карусель
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.carousel-item');
+        const indicators = document.querySelectorAll('.indicator');
+        
+        function showSlide(n) {
+            slides[currentSlide].classList.remove('active');
+            indicators[currentSlide].classList.remove('active');
+            
+            currentSlide = (n + slides.length) % slides.length;
+            
+            slides[currentSlide].classList.add('active');
+            indicators[currentSlide].classList.add('active');
+        }
+        
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+        
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+        
+        // Инициализация карусели
+        if (slides.length > 0) {
+            slides[0].classList.add('active');
+            if (indicators.length > 0) {
+                indicators[0].classList.add('active');
+            }
+            
+            // Автоматическая смена слайдов каждые 5 секунд
+            setInterval(nextSlide, 5000);
+        }
+        
+        // FAQ интерактив
+        document.addEventListener('DOMContentLoaded', function() {
+            const faqQuestions = document.querySelectorAll('.faq-question');
+            
+            faqQuestions.forEach(question => {
+                question.addEventListener('click', () => {
+                    const answer = question.nextElementSibling;
+                    question.classList.toggle('active');
+                    answer.classList.toggle('open');
+                });
+            });
+        });
+    </script>
+</body>
+</html>

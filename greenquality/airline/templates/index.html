@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!-- Карусель с фотографиями на всю ширину экрана -->
+<div class="carousel">
+    <div class="carousel-inner">
+        <div class="carousel-item active">
+            {% load static %}
+            <img src="{% static 'images/airplane-gq.png' %}" alt="Авиалайнер" class="carousel-img">
+            <div class="carousel-caption">
+                <h2>GreenQuality Airlines</h2>
+                <p>Путешествуйте с комфортом и заботой об окружающей среде</p>
+            </div>
+        </div>
+        <div class="carousel-item">
+            {% load static %}
+            <img src="{% static 'images/salon-airplane.jpg' %}" alt="Салон самолета" class="carousel-img">
+            <div class="carousel-caption">
+                <h2>Современный флот</h2>
+                <p>Наши самолеты оснащены всем необходимым для комфортного перелета</p>
+            </div>
+        </div>
+        <div class="carousel-item">
+            {% load static %}
+            <img src="{% static 'images/airoport.jpg' %}" alt="Аэропорт" class="carousel-img">
+            <div class="carousel-caption">
+                <h2>Пунктуальность</h2>
+                <p>Наши рейсы выполняются строго по расписанию</p>
+            </div>
+        </div>
+    </div>
+    <button class="carousel-control prev" onclick="prevSlide()">&#10094;</button>
+    <button class="carousel-control next" onclick="nextSlide()">&#10095;</button>
+    <div class="carousel-indicators">
+        <div class="indicator active" onclick="showSlide(0)"></div>
+        <div class="indicator" onclick="showSlide(1)"></div>
+        <div class="indicator" onclick="showSlide(2)"></div>
+    </div>
+</div>
+
+<!-- Поиск (покупка билетов) -->
+<div class="container">
+    <section class="search-section">
+        <h2>Поиск рейсов</h2>
+        <form class="search-form">
+            <div class="form-group">
+                <label for="from">Откуда</label>
+                <input type="text" id="from" placeholder="Город отправления">
+            </div>
+            <div class="form-group">
+                <label for="to">Куда</label>
+                <input type="text" id="to" placeholder="Город назначения">
+            </div>
+            <div class="form-group">
+                <label for="departure">Дата вылета</label>
+                <input type="date" id="departure">
+            </div>
+            <div class="form-group">
+                <label for="return">Дата возврата</label>
+                <input type="date" id="return">
+            </div>
+            <div class="form-group">
+                <label for="passengers">Пассажиры</label>
+                <select id="passengers">
+                    <option>1 пассажир</option>
+                    <option>2 пассажира</option>
+                    <option>3 пассажира</option>
+                    <option>4+ пассажиров</option>
+                </select>
+            </div>
+            <button type="submit" class="search-btn">Найти билеты</button>
+        </form>
+    </section>
+
+    <!-- Специальные предложения -->
+    <h2 class="section-title">Специальные предложения</h2>
+    <div class="offers-grid">
+        <div class="offer-card">
+            {% load static %}
+            <img src="{% static 'images/paris.jpg' %}" alt="Париж" class="card-img">
+            <div class="card-content">
+                <h3>Париж со скидкой 20%</h3>
+                <p>Уникальное предложение на перелеты в Париж этой осенью. Ограниченное количество мест!</p>
+                <a href="#" class="card-link">Подробнее →</a>
+            </div>
+        </div>
+        <div class="offer-card">
+            {% load static %}
+            <img src="{% static 'images/NY.jpg' %}" alt="Нью-Йорк" class="card-img">
+            <div class="card-content">
+                <h3>Нью-Йорк по специальной цене</h3>
+                <p>Путешествуйте в Нью-Йорк с нашей авиакомпанией по выгодной цене. Включены все налоги.</p>
+                <a href="#" class="card-link">Подробнее →</a>
+            </div>
+        </div>
+        <div class="offer-card">
+            {% load static %}
+            <img src="{% static 'images/japan.jpg' %}" alt="Киото" class="card-img">
+            <div class="card-content">
+                <h3>Киото - эксклюзивное предложение</h3>
+                <p>Специальное предложение на бизнес-класс в Киото. Роскошный комфорт и сервис.</p>
+                <a href="#" class="card-link">Подробнее →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Акции -->
+    <h2 class="section-title">Акции</h2>
+    <div class="offers-grid">
+        <div class="offer-card">
+            {% load static %}
+            <img src="{% static 'images/family.jpg' %}" alt="Семья" class="card-img">
+            <div class="card-content">
+                <h3>Семейные путешествия</h3>
+                <p>Скидка 30% на все перелеты для семей с детьми до 12 лет. Дети до 2 лет летают бесплатно!</p>
+                <a href="#" class="card-link">Подробнее →</a>
+            </div>
+        </div>
+        <div class="offer-card">
+            {% load static %}
+            <img src="{% static 'images/student.png' %}" alt="Студенты" class="card-img">
+            <div class="card-content">
+                <h3>Для студентов</h3>
+                <p>Специальные тарифы для студентов до 26 лет. Путешествуйте по всему миру по выгодной цене!</p>
+                <a href="#" class="card-link">Подробнее →</a>
+            </div>
+        </div>
+        <div class="offer-card">
+            {% load static %}
+            <img src="{% static 'images/biznes.jpg' %}" alt="Бизнес" class="card-img">
+            <div class="card-content">
+                <h3>Бизнес-путешественники</h3>
+                <p>Гибкие тарифы и дополнительные привилегии для бизнес-путешественников.</p>
+                <a href="#" class="card-link">Подробнее →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Бонусная программа Мили -->
+    <div class="bonus-program">
+        <h2>Бонусная программа "Мили"</h2>
+        <p>Зарабатывайте мили за каждый перелет и обменивайте их на бесплатные билеты, апгрейды и другие привилегии!</p>
+        <button class="bonus-btn">Присоединиться к программе</button>
+    </div>
+
+    <!-- Расписание рейсов -->
+    <h2 class="section-title">Расписание рейсов</h2>
+    <div class="schedule-grid">
+        <div class="schedule-card">
+            <div class="card-content">
+                <h3>Москва - Санкт-Петербург</h3>
+                <p><strong>Рейс:</strong> GQ101</p>
+                <p><strong>Вылет:</strong> 08:45</p>
+                <p><strong>Прибытие:</strong> 10:15</p>
+                <p><strong>Статус:</strong> <span style="color: #0bda51;">По расписанию</span></p>
+            </div>
+        </div>
+        <div class="schedule-card">
+            <div class="card-content">
+                <h3>Москва - Сочи</h3>
+                <p><strong>Рейс:</strong> GQ205</p>
+                <p><strong>Вылет:</strong> 12:30</p>
+                <p><strong>Прибытие:</strong> 14:45</p>
+                <p><strong>Статус:</strong> <span style="color: #0bda51;">По расписанию</span></p>
+            </div>
+        </div>
+        <div class="schedule-card">
+            <div class="card-content">
+                <h3>Москва - Минск</h3>
+                <p><strong>Рейс:</strong> GQ312</p>
+                <p><strong>Вылет:</strong> 16:20</p>
+                <p><strong>Прибытие:</strong> 17:55</p>
+                <p><strong>Статус:</strong> <span style="color: #0bda51;">По расписанию</span></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Новости -->
+    <h2 class="section-title">Новости</h2>
+    <div class="news-grid">
+        <div class="news-card">
+            {% load static %}
+            <img src="{% static 'images/airplane-gq.png' %}" alt="Новость" class="card-img">
+            <div class="card-content">
+                <h3>Новый самолет в нашем флоте</h3>
+                <p>GreenQuality Airlines пополнила свой флот современным Airbus A350. Самые низкие уровни шума и выбросов!</p>
+                <a href="#" class="card-link">Читать далее →</a>
+            </div>
+        </div>
+        <div class="news-card">
+            {% load static %}
+            <img src="{% static 'images/eco.jpg' %}" alt="Новость" class="card-img">
+            <div class="card-content">
+                <h3>Награда за экологичность</h3>
+                <p>Наша авиакомпания получила международную премию за вклад в развитие экологичных технологий в авиации.</p>
+                <a href="#" class="card-link">Читать далее →</a>
+            </div>
+        </div>
+        <div class="news-card">
+            {% load static %}
+            <img src="{% static 'images/oregona.jpg' %}" alt="Новость" class="card-img">
+            <div class="card-content">
+                <h3>Расширение маршрутов</h3>
+                <p>GreenQuality Airlines открывает новые направления в Азию и Северную Америку этим летом.</p>
+                <a href="#" class="card-link">Читать далее →</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- FAQ интерактивный -->
+    <section class="faq-section">
+        <h2 class="section-title">Часто задаваемые вопросы</h2>
+        <div class="faq-item">
+            <div class="faq-question">Как можно оплатить билет?</div>
+            <div class="faq-answer">
+                <p>Вы можете оплатить билет банковской картой (Visa, MasterCard, МИР), через электронные платежные системы (Яндекс.Деньги, WebMoney) или наличными в кассах аэропорта.</p>
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Можно ли вернуть билет?</div>
+            <div class="faq-answer">
+                <p>Да, билеты можно вернуть. Сроки и условия возврата зависят от тарифа. Подробную информацию вы можете найти в разделе "Условия возврата" на нашем сайте.</p>
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Как зарегистрироваться на рейс онлайн?</div>
+            <div class="faq-answer">
+                <p>Онлайн-регистрация доступна за 24 часа и до 1 часа до вылета. Вам потребуется номер бронирования и фамилия пассажира. Пройдите в раздел "Регистрация на рейс" на нашем сайте.</p>
+            </div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Что можно провозить в багаже?</div>
+            <div class="faq-answer">
+                <p>Бесплатный багаж зависит от класса обслуживания и тарифа. Обычно это 20-30 кг для эконом-класса и до 40 кг для бизнес-класса. Дополнительный багаж можно оформить за дополнительную плату.</p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}
