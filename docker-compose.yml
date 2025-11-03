@@ -9,13 +9,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://postgres:1@db:5432/GreenQualityDB
+
   db:
     restart: always
     image: postgres:16
     volumes:
       - postgres_data:/var/lib/postgresql/data/
+      - ./greenqualitydb.sql:/docker-entrypoint-initdb.d/greenqualitydb.sql
     environment:
-      - POSTGRES_DB=test
+      - POSTGRES_DB=GreenQualityDB
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=1
     ports:

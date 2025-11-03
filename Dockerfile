@@ -1,5 +1,10 @@
 FROM python:3.13.9-slim
 
+# Установка необходимых пакетов для PostgreSQL
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
 # Установка рабочей директории
 WORKDIR /app
 
