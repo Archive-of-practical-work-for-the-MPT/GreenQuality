@@ -21,6 +21,13 @@
                     <li><a href="#">О нас</a></li>
                     <li><a href="#">Рейсы</a></li>
                     <li><a href="#">Контакты</a></li>
+                    {% if request.session.account_id %}
+                        <li><a href="{% url 'auth:profile' %}">Профиль</a></li>
+                        <li><a href="{% url 'auth:logout' %}">Выйти</a></li>
+                    {% else %}
+                        <li><a href="{% url 'auth:login' %}">Войти</a></li>
+                        <li><a href="{% url 'auth:register' %}">Регистрация</a></li>
+                    {% endif %}
                 </ul>
             </nav>
         </div>
