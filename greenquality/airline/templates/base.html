@@ -6,7 +6,6 @@
     <title>{% block title %}GreenQuality Airlines{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
     <!-- Шапка с эффектом мутного стекла -->
@@ -18,18 +17,10 @@
             </div>
             <nav class="navigation">
                 <ul>
-                    <li><a href="{% url 'index' %}">Главная</a></li>
+                    <li><a href="#">Главная</a></li>
                     <li><a href="#">О нас</a></li>
                     <li><a href="#">Рейсы</a></li>
                     <li><a href="#">Контакты</a></li>
-                    <li><a href="{% url 'control_panel' %}">Панель управления</a></li>
-                    {% if request.session.account_id %}
-                        <li><a href="{% url 'auth:profile' %}">Профиль</a></li>
-                        <li><a href="{% url 'auth:logout' %}">Выйти</a></li>
-                    {% else %}
-                        <li><a href="{% url 'auth:login' %}">Войти</a></li>
-                        <li><a href="{% url 'auth:register' %}">Регистрация</a></li>
-                    {% endif %}
                 </ul>
             </nav>
         </div>

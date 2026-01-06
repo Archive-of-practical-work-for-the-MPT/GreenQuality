@@ -16,11 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from airline.metrics_view import prometheus_metrics_view
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('airline.urls')),
-    path('api/', include('airline.api_urls')),
-    path('prometheus/metrics/', prometheus_metrics_view, name='prometheus-metrics'),
 ]
