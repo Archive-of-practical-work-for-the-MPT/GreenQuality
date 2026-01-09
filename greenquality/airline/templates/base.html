@@ -20,7 +20,7 @@
                 <ul>
                     <li><a href="{% url 'index' %}">Главная</a></li>
                     <li><a href="{% url 'about' %}">О нас</a></li>
-                    <li><a href="#">Рейсы</a></li>
+                    <li><a href="{% url 'flights' %}">Рейсы</a></li>
                     <li><a href="{% url 'contacts' %}">Контакты</a></li>
                 </ul>
             </nav>
@@ -110,5 +110,6 @@
             });
         });
     </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

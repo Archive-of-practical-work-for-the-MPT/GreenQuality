@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+
+{% block title %}Рейсы - GreenQuality Airlines{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Получаем модальное окно
+    var modal = document.getElementById("flightModal");
+    
+    // Получаем кнопку закрытия
+    var span = document.getElementsByClassName("close")[0];
+    
+    // Получаем все кнопки "Подробнее"
+    var detailButtons = document.querySelectorAll(".details-btn");
+    
+    // Добавляем обработчики событий для каждой кнопки
+    detailButtons.forEach(function(button, index) {
+        button.addEventListener('click', function() {
+            // Здесь можно добавить логику для получения данных конкретного рейса
+            // Пока показываем модальное окно с демонстрационными данными
+            modal.style.display = "block";
+            
+            // Можно изменить данные в модальном окне в зависимости от рейса
+            var flightNumbers = ['GQ101', 'GQ205', 'GQ312', 'GQ408', 'GQ515', 'GQ622', 'GQ733', 'GQ841', 'GQ952', 'GQ106'];
+            var destinations = [
+                'Москва → Санкт-Петербург',
+                'Москва → Сочи',
+                'Москва → Минск',
+                'Москва → Париж',
+                'Санкт-Петербург → Москва',
+                'Сочи → Москва',
+                'Минск → Москва',
+                'Париж → Москва',
+                'Москва → Нью-Йорк',
+                'Нью-Йорк → Москва'
+            ];
+            
+            // Обновляем заголовок модального окна
+            document.querySelector('#flightModal .modal-content h2').textContent = 'Детали рейса ' + flightNumbers[index];
+            
+            // Обновляем направление
+            document.querySelectorAll('.detail-row .value')[0].textContent = destinations[index];
+        });
+    });
+    
+    // Закрытие модального окна при клике на ×
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+    
+    // Закрытие модального окна при клике вне его
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+    
+    // Обработка формы поиска
+    var searchForm = document.querySelector('.flights-filter-form');
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        // Здесь будет логика фильтрации рейсов
+        alert('Функция поиска будет реализована в следующих версиях!');
+    });
+    
+    // Обработка сброса фильтров
+    var resetButton = document.querySelector('.reset-btn');
+    resetButton.addEventListener('click', function() {
+        searchForm.reset();
+    });
+    
+    // Добавляем интерактивность для таблицы
+    var tableRows = document.querySelectorAll('.flights-table tbody tr');
+    tableRows.forEach(function(row) {
+        row.addEventListener('mouseenter', function() {
+            this.style.backgroundColor = '#f0f8ff';
+        });
+        
+        row.addEventListener('mouseleave', function() {
+            this.style.backgroundColor = '';
+        });
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Заголовок страницы -->
+    <section class="page-header">
+        <h1 class="page-title">Расписание рейсов</h1>
+        <p class="page-subtitle">Актуальное расписание всех направлений нашей авиакомпании</p>
+    </section>
+
+    <!-- Фильтры и поиск -->
+    <section class="flights-search">
+        <div class="search-container">
+            <form class="flights-filter-form">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="direction">Направление</label>
+                        <select id="direction" name="direction">
+                            <option value="">Все направления</option>
+                            <option value="moscow">Москва</option>
+                            <option value="spb">Санкт-Петербург</option>
+                            <option value="sochi">Сочи</option>
+                            <option value="minsk">Минск</option>
+                            <option value="paris">Париж</option>
+                            <option value="ny">Нью-Йорк</option>
+                            <option value="tokyo">Токио</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Дата</label>
+                        <input type="date" id="date" name="date">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Статус</label>
+                        <select id="status" name="status">
+                            <option value="">Все статусы</option>
+                            <option value="scheduled">По расписанию</option>
+                            <option value="delayed">Задерживается</option>
+                            <option value="departed">Вылетел</option>
+                            <option value="arrived">Прибыл</option>
+                            <option value="cancelled">Отменен</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="flight-number">Номер рейса</label>
+                        <input type="text" id="flight-number" name="flight_number" placeholder="GQ123">
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="search-btn">Найти рейсы</button>
+                    <button type="reset" class="reset-btn">Сбросить фильтры</button>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Легенда статусов -->
+    <section class="status-legend">
+        <h3>Легенда статусов:</h3>
+        <div class="legend-items">
+            <div class="legend-item">
+                <span class="status-indicator scheduled"></span>
+                <span>По расписанию</span>
+            </div>
+            <div class="legend-item">
+                <span class="status-indicator delayed"></span>
+                <span>Задерживается</span>
+            </div>
+            <div class="legend-item">
+                <span class="status-indicator departed"></span>
+                <span>Вылетел</span>
+            </div>
+            <div class="legend-item">
+                <span class="status-indicator arrived"></span>
+                <span>Прибыл</span>
+            </div>
+            <div class="legend-item">
+                <span class="status-indicator cancelled"></span>
+                <span>Отменен</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Таблица рейсов -->
+    <section class="flights-table-section">
+        <h2 class="section-title">Актуальное расписание</h2>
+        <div class="table-container">
+            <table class="flights-table">
+                <thead>
+                    <tr>
+                        <th>Рейс</th>
+                        <th>Направление</th>
+                        <th>Вылет</th>
+                        <th>Прибытие</th>
+                        <th>Статус</th>
+                        <th>Терминал</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>GQ101</strong></td>
+                        <td>Москва → Санкт-Петербург</td>
+                        <td>08:45</td>
+                        <td>10:15</td>
+                        <td><span class="status-badge scheduled">По расписанию</span></td>
+                        <td>A</td>
+                        <td>
+                            <button class="details-btn">Подробнее</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GQ205</strong></td>
+                        <td>Москва → Сочи</td>
+                        <td>12:30</td>
+                        <td>14:45</td>
+                        <td><span class="status-badge scheduled">По расписанию</span></td>
+                        <td>B</td>
+                        <td>
+                            <button class="details-btn">Подробнее</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GQ312</strong></td>
+                        <td>Москва → Минск</td>
+                        <td>16:20</td>
+                        <td>17:55</td>
+                        <td><span class="status-badge delayed">Задерживается</span></td>
+                        <td>C</td>
+                        <td>
+                            <button class="details-btn">Подробнее</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GQ408</strong></td>
+                        <td>Москва → Париж</td>
+                        <td>21:10</td>
+                        <td>00:45+1</td>
+                        <td><span class="status-badge departed">Вылетел</span></td>
+                        <td>D</td>
+                        <td>
+                            <button class="details-btn">Подробнее</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GQ515</strong></td>
+                        <td>Санкт-Петербург → Москва</td>
+                        <td>09:30</td>
+                        <td>11:00</td>
+                        <td><span class="status-badge arrived">Прибыл</span></td>
+                        <td>A</td>
+                        <td>
+                            <button class="details-btn">Подробнее</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GQ622</strong></td>
+                        <td>Сочи → Москва</td>
+                        <td>13:15</td>
+                        <td>15:30</td>
+                        <td><span class="status-badge scheduled">По расписанию</span></td>
+                        <td>B</td>
+                        <td>
+                            <button class="details-btn">Подробнее</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GQ733</strong></td>
+                        <td>Минск → Москва</td>
+                        <td>18:40</td>
+                        <td>20:15</td>
+                        <td><span class="status-badge scheduled">По расписанию</span></td>
+                        <td>C</td>
+                        <td>
+                            <button class="details-btn">Подробнее</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GQ841</strong></td>
+                        <td>Париж → Москва</td>
+                        <td>07:25</td>
+                        <td>11:00</td>
+                        <td><span class="status-badge cancelled">Отменен</span></td>
+                        <td>D</td>
+                        <td>
+                            <button class="details-btn">Подробнее</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GQ952</strong></td>
+                        <td>Москва → Нью-Йорк</td>
+                        <td>23:30</td>
+                        <td>06:45+1</td>
+                        <td><span class="status-badge scheduled">По расписанию</span></td>
+                        <td>E</td>
+                        <td>
+                            <button class="details-btn">Подробнее</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>GQ106</strong></td>
+                        <td>Нью-Йорк → Москва</td>
+                        <td>14:20</td>
+                        <td>05:35+1</td>
+                        <td><span class="status-badge departed">Вылетел</span></td>
+                        <td>E</td>
+                        <td>
+                            <button class="details-btn">Подробнее</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Популярные направления -->
+    <section class="popular-routes">
+        <h2 class="section-title">Популярные направления</h2>
+        <div class="routes-grid">
+            <div class="route-card">
+                <div class="route-header">
+                    <h3>Москва ↔ Санкт-Петербург</h3>
+                    <span class="frequency">Ежедневно</span>
+                </div>
+                <div class="route-details">
+                    <p>Самое популярное направление в России. Рейсы выполняются каждые 2-3 часа.</p>
+                    <div class="route-stats">
+                        <span>⏱️ В пути: 1ч 30мин</span>
+                        <span>✈️ Самолеты: Airbus A320</span>
+                    </div>
+                </div>
+            </div>
+            <div class="route-card">
+                <div class="route-header">
+                    <h3>Москва ↔ Сочи</h3>
+                    <span class="frequency">Ежедневно</span>
+                </div>
+                <div class="route-details">
+                    <p>Популярное направление для отдыха. Лето - особенно высокий спрос.</p>
+                    <div class="route-stats">
+                        <span>⏱️ В пути: 2ч 15мин</span>
+                        <span>✈️ Самолеты: Boeing 737</span>
+                    </div>
+                </div>
+            </div>
+            <div class="route-card">
+                <div class="route-header">
+                    <h3>Москва ↔ Париж</h3>
+                    <span class="frequency">5 раз в неделю</span>
+                </div>
+                <div class="route-details">
+                    <p>Один из самых престижных маршрутов нашей компании. Высокий уровень сервиса.</p>
+                    <div class="route-stats">
+                        <span>⏱️ В пути: 3ч 35мин</span>
+                        <span>✈️ Самолеты: Airbus A350</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Информация о терминалах -->
+    <section class="terminals-info">
+        <h2 class="section-title">Информация о терминалах</h2>
+        <div class="terminals-grid">
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <h3>Терминал A</h3>
+                    <span class="terminal-type">Внутренние рейсы</span>
+                </div>
+                <div class="terminal-services">
+                    <h4>Услуги:</h4>
+                    <ul>
+                        <li>Кафе и рестораны</li>
+                        <li>Магазины дьюти фри</li>
+                        <li>Wi-Fi бесплатно</li>
+                        <li>Зоны отдыха</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <h3>Терминал B</h3>
+                    <span class="terminal-type">Внутренние рейсы</span>
+                </div>
+                <div class="terminal-services">
+                    <h4>Услуги:</h4>
+                    <ul>
+                        <li>Детская игровая зона</li>
+                        <li>Бизнес-залы</li>
+                        <li>Банкоматы</li>
+                        <li>Медицинский пункт</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <h3>Терминал D</h3>
+                    <span class="terminal-type">Международные рейсы</span>
+                </div>
+                <div class="terminal-services">
+                    <h4>Услуги:</h4>
+                    <ul>
+                        <li>Паспортный контроль</li>
+                        <li>Таможня</li>
+                        <li>Валютные обменные пункты</li>
+                        <li>Места для молитвы</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Модальное окно деталей рейса -->
+<div id="flightModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Детали рейса GQ101</h2>
+        <div class="flight-details">
+            <div class="detail-row">
+                <span class="label">Направление:</span>
+                <span class="value">Москва → Санкт-Петербург</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Расписание:</span>
+                <span class="value">Вылет 08:45 | Прибытие 10:15</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Самолет:</span>
+                <span class="value">Airbus A320 (EW-123)</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Терминал:</span>
+                <span class="value">A</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Статус:</span>
+                <span class="value status-scheduled">По расписанию</span>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="book-btn">Забронировать</button>
+            <button class="track-btn">Отследить</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
