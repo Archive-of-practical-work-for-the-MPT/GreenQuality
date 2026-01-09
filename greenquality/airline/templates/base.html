@@ -6,7 +6,8 @@
     <title>{% block title %}GreenQuality Airlines{% endblock %}</title>
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
-        <link rel="stylesheet" href="{% static 'css/pages.css' %}">
+    <link rel="stylesheet" href="{% static 'css/pages.css' %}">
+    {% block extra_css %}{% endblock %}
 </head>
 <body>
     <!-- Шапка с эффектом мутного стекла -->
@@ -22,6 +23,8 @@
                     <li><a href="{% url 'about' %}">О нас</a></li>
                     <li><a href="{% url 'flights' %}">Рейсы</a></li>
                     <li><a href="{% url 'contacts' %}">Контакты</a></li>
+                    <li><a href="{% url 'login' %}" class="btn btn-outline">Вход</a></li>
+                    <li><a href="{% url 'register' %}" class="btn btn-primary">Регистрация</a></li>
                 </ul>
             </nav>
         </div>
