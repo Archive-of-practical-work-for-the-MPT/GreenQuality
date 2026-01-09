@@ -1,0 +1,477 @@
+/* Стили для страницы "О нас" */
+.page-header {
+    text-align: center;
+    margin: 50px 0;
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #0bda51 0%, #08a53d 100%);
+    border-radius: 20px;
+    color: white;
+    box-shadow: 0 10px 30px rgba(11, 218, 81, 0.3);
+}
+
+.page-title {
+    font-size: 42px;
+    margin-bottom: 15px;
+    font-weight: 700;
+}
+
+.page-subtitle {
+    font-size: 22px;
+    opacity: 0.9;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin: 50px 0;
+}
+
+.info-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.card-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.info-card h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.info-card p {
+    color: #7f8c8d;
+    line-height: 1.7;
+}
+
+.history-section {
+    margin: 60px 0;
+}
+
+.timeline {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: #0bda51;
+    transform: translateX(-50%);
+}
+
+.timeline-item {
+    display: flex;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.timeline-item:nth-child(odd) {
+    flex-direction: row-reverse;
+}
+
+.timeline-year {
+    background: #0bda51;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    font-weight: 700;
+    min-width: 80px;
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-content {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    max-width: 350px;
+    margin: 0 20px;
+}
+
+.timeline-content h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+}
+
+.timeline-content p {
+    color: #7f8c8d;
+    line-height: 1.7;
+}
+
+.team-section {
+    margin: 60px 0;
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.team-member {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+}
+
+.team-member:hover {
+    transform: translateY(-5px);
+}
+
+.member-photo {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    overflow: hidden;
+    background: #f8f9fa;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.photo-placeholder {
+    font-size: 60px;
+}
+
+.team-member h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 22px;
+}
+
+.member-position {
+    color: #0bda51;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.member-bio {
+    color: #7f8c8d;
+    line-height: 1.7;
+}
+
+.advantages-section {
+    margin: 60px 0;
+}
+
+.advantages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.advantage-item {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+}
+
+.advantage-item:hover {
+    transform: translateY(-5px);
+}
+
+.advantage-icon {
+    font-size: 40px;
+    margin-bottom: 20px;
+}
+
+.advantage-item h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 22px;
+}
+
+.advantage-item p {
+    color: #7f8c8d;
+    line-height: 1.7;
+}
+
+/* Стили для страницы "Контакты" */
+.contact-info {
+    margin: 50px 0;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+}
+
+.contact-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+}
+
+.contact-card:hover {
+    transform: translateY(-5px);
+}
+
+.contact-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.contact-card h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 24px;
+}
+
+.contact-card p {
+    color: #7f8c8d;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.contact-card small {
+    color: #95a5a6;
+    font-size: 14px;
+}
+
+.feedback-section {
+    margin: 60px 0;
+}
+
+.feedback-container {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.feedback-form {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.checkbox-group {
+    margin-top: 20px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 16px;
+    color: #7f8c8d;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-right: 10px;
+    width: 18px;
+    height: 18px;
+}
+
+.submit-btn {
+    background: linear-gradient(45deg, #0bda51, #08a53d);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.submit-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 7px 15px rgba(11, 218, 81, 0.4);
+}
+
+.offices-section {
+    margin: 60px 0;
+}
+
+.offices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.office-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+}
+
+.office-card:hover {
+    transform: translateY(-5px);
+}
+
+.office-card h3 {
+    color: #2c3e50;
+    margin-bottom: 20px;
+    font-size: 22px;
+}
+
+.office-location,
+.office-hours,
+.office-phone {
+    color: #7f8c8d;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.quick-faq {
+    margin: 60px 0;
+}
+
+.faq-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-top: 30px;
+}
+
+.faq-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.faq-card h3 {
+    color: #2c3e50;
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+.faq-card p {
+    color: #7f8c8d;
+    line-height: 1.7;
+}
+
+.social-section {
+    margin: 60px 0;
+}
+
+.social-links-large {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 30px;
+}
+
+.social-link {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    text-decoration: none;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.social-link:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.social-icon-large {
+    font-size: 40px;
+    margin-right: 20px;
+    min-width: 40px;
+}
+
+.social-info h3 {
+    color: #2c3e50;
+    margin-bottom: 8px;
+    font-size: 22px;
+}
+
+.social-info p {
+    color: #7f8c8d;
+    font-size: 16px;
+}
+
+/* Адаптивность для новых стилей */
+@media (max-width: 768px) {
+    .page-title {
+        font-size: 32px;
+    }
+    
+    .page-subtitle {
+        font-size: 18px;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .timeline::before {
+        left: 30px;
+    }
+    
+    .timeline-item {
+        flex-direction: row !important;
+    }
+    
+    .timeline-year {
+        margin-right: 20px;
+        min-width: 60px;
+    }
+    
+    .timeline-content {
+        max-width: calc(100% - 110px);
+        margin: 0;
+    }
+    
+    .social-link {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .social-icon-large {
+        margin-right: 0;
+        margin-bottom: 15px;
+    }
+}
