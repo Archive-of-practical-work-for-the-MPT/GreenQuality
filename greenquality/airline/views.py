@@ -367,45 +367,132 @@ def profile_view(request):
             messages.success(request, 'Профиль успешно обновлен')
             return redirect('profile')
 
-        # Получаем историю покупок пользователя
-        # Находим все платежи пользователя
-        payments = Payment.objects.filter(
-            user_id=user).order_by('-payment_date')
+        # Проверяем роль пользователя
+        is_admin = account.role_id and account.role_id.role_name == 'ADMIN'
+        
+        if is_admin:
+            # Статистика для администратора
+            from django.db.models import Count, Sum, Avg
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            # Статистика по пользователям
+            total_users = User.objects.count()
+            total_accounts = Account.objects.count()
+            users_with_tickets = User.objects.filter(
+                id_user__in=Payment.objects.values_list('user_id', flat=True).distinct()
+            ).count()
+            
+            # Статистика по самолетам
+            total_airplanes = Airplane.objects.count()
+            total_capacity = Airplane.objects.aggregate(Sum('capacity'))['capacity__sum'] or 0
+            
+            # Статистика по рейсам
+            total_flights = Flight.objects.count()
+            scheduled_flights = Flight.objects.filter(status='SCHEDULED').count()
+            completed_flights = Flight.objects.filter(status='COMPLETED').count()
+            cancelled_flights = Flight.objects.filter(status='CANCELLED').count()
+            
+            # Статистика по билетам
+            total_tickets = Ticket.objects.count()
+            paid_tickets = Ticket.objects.filter(status='PAID').count()
+            booked_tickets = Ticket.objects.filter(status='BOOKED').count()
+            
+            # Статистика по платежам
+            total_payments = Payment.objects.count()
+            total_revenue = Payment.objects.aggregate(Sum('total_cost'))['total_cost__sum'] or Decimal('0.00')
+            completed_payments = Payment.objects.filter(status='COMPLETED').count()
+            
+            # Статистика по аэропортам
+            total_airports = Airport.objects.count()
+            
+            # Статистика за последние 30 дней
+            thirty_days_ago = timezone.now() - timedelta(days=30)
+            recent_tickets = Ticket.objects.filter(
+                payment_id__payment_date__gte=thirty_days_ago
+            ).count()
+            recent_revenue = Payment.objects.filter(
+                payment_date__gte=thirty_days_ago,
+                status='COMPLETED'
+            ).aggregate(Sum('total_cost'))['total_cost__sum'] or Decimal('0.00')
+            
+            # Популярные направления
+            popular_routes = Flight.objects.values(
+                'departure_airport_id__city',
+                'arrival_airport_id__city'
+            ).annotate(
+                ticket_count=Count('ticket')
+            ).order_by('-ticket_count')[:5]
+            
+            context = {
+                'user': user,
+                'account': account,
+                'email': account.email,
+                'first_name': user.first_name or '',
+                'last_name': user.last_name or '',
+                'patronymic': user.patronymic or '',
+                'phone': user.phone or '',
+                'passport_number': user.passport_number or '',
+                'birthday': user.birthday.strftime('%d.%m.%Y') if user.birthday else '',
+                'is_admin': True,
+                # Статистика
+                'total_users': total_users,
+                'total_accounts': total_accounts,
+                'users_with_tickets': users_with_tickets,
+                'total_airplanes': total_airplanes,
+                'total_capacity': total_capacity,
+                'total_flights': total_flights,
+                'scheduled_flights': scheduled_flights,
+                'completed_flights': completed_flights,
+                'cancelled_flights': cancelled_flights,
+                'total_tickets': total_tickets,
+                'paid_tickets': paid_tickets,
+                'booked_tickets': booked_tickets,
+                'total_payments': total_payments,
+                'total_revenue': total_revenue,
+                'completed_payments': completed_payments,
+                'total_airports': total_airports,
+                'recent_tickets': recent_tickets,
+                'recent_revenue': recent_revenue,
+                'popular_routes': popular_routes,
+            }
+        else:
+            # История покупок для обычных пользователей
+            payments = Payment.objects.filter(
+                user_id=user).order_by('-payment_date')
 
-        # Получаем все билеты, связанные с этими платежами
-        tickets = []
-        for payment in payments:
-            payment_tickets = Ticket.objects.filter(payment_id=payment).select_related(
-                'flight_id', 'flight_id__departure_airport_id',
-                'flight_id__arrival_airport_id', 'class_id', 'passenger_id'
-            )
-            for ticket in payment_tickets:
-                tickets.append({
-                    'ticket': ticket,
-                    'payment': payment,
-                    'flight': ticket.flight_id,
-                    'class_name': ticket.class_id.class_name,
-                    'passenger': ticket.passenger_id,
-                })
+            tickets = []
+            for payment in payments:
+                payment_tickets = Ticket.objects.filter(payment_id=payment).select_related(
+                    'flight_id', 'flight_id__departure_airport_id',
+                    'flight_id__arrival_airport_id', 'class_id', 'passenger_id'
+                )
+                for ticket in payment_tickets:
+                    tickets.append({
+                        'ticket': ticket,
+                        'payment': payment,
+                        'flight': ticket.flight_id,
+                        'class_name': ticket.class_id.class_name,
+                        'passenger': ticket.passenger_id,
+                    })
 
-        # Сортируем билеты по дате платежа (новые сначала)
-        tickets.sort(key=lambda x: x['payment'].payment_date, reverse=True)
+            tickets.sort(key=lambda x: x['payment'].payment_date, reverse=True)
 
-        # Подготавливаем контекст для отображения
-        context = {
-            'user': user,
-            'account': account,
-            'email': account.email,
-            'first_name': user.first_name or '',
-            'last_name': user.last_name or '',
-            'patronymic': user.patronymic or '',
-            'phone': user.phone or '',
-            'passport_number': user.passport_number or '',
-            'birthday': user.birthday.strftime('%d.%m.%Y') if user.birthday else '',
-            'tickets': tickets,
-            'total_tickets': len(tickets),
-        }
-
+            context = {
+                'user': user,
+                'account': account,
+                'email': account.email,
+                'first_name': user.first_name or '',
+                'last_name': user.last_name or '',
+                'patronymic': user.patronymic or '',
+                'phone': user.phone or '',
+                'passport_number': user.passport_number or '',
+                'birthday': user.birthday.strftime('%d.%m.%Y') if user.birthday else '',
+                'is_admin': False,
+                'tickets': tickets,
+                'total_tickets': len(tickets),
+            }
+        
         return render(request, 'profile.html', context)
 
     except Account.DoesNotExist:

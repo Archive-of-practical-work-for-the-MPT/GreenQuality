@@ -8,6 +8,7 @@ from datetime import timedelta
 from airline.models import (
     Airport, Airplane, Flight, Role, Class, Account, User, BaggageType
 )
+from django.contrib.auth.hashers import make_password
 from decimal import Decimal
 
 
@@ -31,6 +32,9 @@ class Command(BaseCommand):
         
         # Создаем типы багажа
         self.create_baggage_types()
+        
+        # Создаем администратора
+        self.create_admin()
         
         # Создаем рейсы
         self.create_flights()
@@ -135,6 +139,42 @@ class Command(BaseCommand):
                 self.stdout.write(f'  ✓ Создан тип багажа: {baggage_type.get_type_name_display()}')
             else:
                 self.stdout.write(f'  - Тип багажа уже существует: {baggage_type.get_type_name_display()}')
+
+    def create_admin(self):
+        """Создание администратора"""
+        try:
+            # Получаем роль ADMIN
+            admin_role, _ = Role.objects.get_or_create(role_name='ADMIN')
+            
+            # Проверяем, существует ли уже администратор
+            if Account.objects.filter(email='admin@gmail.com').exists():
+                self.stdout.write('  - Администратор уже существует: admin@gmail.com')
+                return
+            
+            # Хэшируем пароль
+            hashed_password = make_password('adminadmin')
+            
+            # Создаем аккаунт администратора
+            admin_account = Account.objects.create(
+                email='admin@gmail.com',
+                password=hashed_password,
+                role_id=admin_role
+            )
+            
+            # Создаем пользователя для администратора
+            admin_user = User.objects.create(
+                account_id=admin_account,
+                first_name='Администратор',
+                last_name='Системы',
+                patronymic=None,
+                phone=None,
+                passport_number=None,
+                birthday=None
+            )
+            
+            self.stdout.write(self.style.SUCCESS('  ✓ Создан администратор: admin@gmail.com (пароль: adminadmin)'))
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f'  ✗ Ошибка при создании администратора: {str(e)}'))
 
     def create_airplanes(self):
         """Создание самолетов"""
