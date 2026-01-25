@@ -1,0 +1,30 @@
+{% if flights.has_other_pages %}
+    <div class="pagination">
+        <div class="pagination-info">
+            Показано {{ flights.start_index }}–{{ flights.end_index }} из {{ flights.paginator.count }} рейсов
+        </div>
+        <div class="pagination-controls">
+            {% if flights.has_previous %}
+                <a href="#" class="pagination-btn" data-page="{{ flights.previous_page_number }}">←</a>
+            {% else %}
+                <span class="pagination-btn disabled">←</span>
+            {% endif %}
+            
+            <div class="pagination-numbers">
+                {% for page_num in flights.paginator.page_range %}
+                    {% if page_num == flights.number %}
+                        <span class="pagination-number active">{{ page_num }}</span>
+                    {% else %}
+                        <a href="#" class="pagination-number" data-page="{{ page_num }}">{{ page_num }}</a>
+                    {% endif %}
+                {% endfor %}
+            </div>
+            
+            {% if flights.has_next %}
+                <a href="#" class="pagination-btn" data-page="{{ flights.next_page_number }}">→</a>
+            {% else %}
+                <span class="pagination-btn disabled">→</span>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}

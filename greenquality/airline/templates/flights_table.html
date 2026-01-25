@@ -1,0 +1,37 @@
+{% if flights %}
+    {% for item in flights %}
+        <tr>
+            <td><strong>{{ item.flight_number }}</strong></td>
+            <td>{{ item.departure_airport.city }} → {{ item.arrival_airport.city }}</td>
+            <td>{{ item.flight.departure_time|date:"H:i" }}</td>
+            <td>
+                {{ item.flight.arrival_time|date:"H:i" }}
+                {% if item.flight.arrival_time.date != item.flight.departure_time.date %}
+                    +1
+                {% endif %}
+            </td>
+            <td>
+                <span class="status-badge 
+                    {% if item.flight.status == 'SCHEDULED' %}scheduled
+                    {% elif item.flight.status == 'DELAYED' %}delayed
+                    {% elif item.flight.status == 'CANCELLED' %}cancelled
+                    {% elif item.flight.status == 'COMPLETED' %}arrived
+                    {% endif %}">
+                    {{ item.flight.get_status_display }}
+                </span>
+            </td>
+            <td>{{ item.departure_airport.id_airport|first }}</td>
+            <td>
+                <button class="details-btn" onclick="showFlightDetails({{ item.flight.id_flight }})">
+                    Подробнее
+                </button>
+            </td>
+        </tr>
+    {% endfor %}
+{% else %}
+    <tr>
+        <td colspan="7" style="text-align: center; padding: 40px; color: #7f8c8d;">
+            <p>Рейсы не найдены</p>
+        </td>
+    </tr>
+{% endif %}

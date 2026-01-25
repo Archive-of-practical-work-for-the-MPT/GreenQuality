@@ -3,7 +3,7 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils.dateparse import parse_date
 from django.db.models import Q
-from .models import User, Account, Role, Payment, Ticket, Flight, Passenger
+from .models import User, Account, Role, Payment, Ticket, Flight, Passenger, Airport
 
 
 def index(request):
@@ -19,7 +19,112 @@ def contacts(request):
 
 
 def flights(request):
-    return render(request, 'flights.html')
+    """Отображение страницы рейсов с данными из базы"""
+    from django.utils import timezone
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    from django.http import JsonResponse
+    from django.template.loader import render_to_string
+    
+    # Получаем все рейсы с связанными данными
+    flights_list = Flight.objects.select_related(
+        'departure_airport_id', 'arrival_airport_id', 'airplane_id'
+    ).order_by('departure_time')
+    
+    # Фильтрация по параметрам запроса
+    departure_city = request.GET.get('departure', '')
+    arrival_city = request.GET.get('arrival', '')
+    status_filter = request.GET.get('status', '')
+    date_filter = request.GET.get('date', '')
+    flight_number = request.GET.get('flight_number', '')
+    
+    if departure_city:
+        flights_list = flights_list.filter(
+            departure_airport_id__city__icontains=departure_city
+        )
+    
+    if arrival_city:
+        flights_list = flights_list.filter(
+            arrival_airport_id__city__icontains=arrival_city
+        )
+    
+    if status_filter:
+        # Преобразуем статус из формы в статус модели
+        status_map = {
+            'scheduled': 'SCHEDULED',
+            'delayed': 'DELAYED',
+            'departed': 'COMPLETED',  # В модели нет DEPARTED, используем COMPLETED
+            'arrived': 'COMPLETED',
+            'cancelled': 'CANCELLED'
+        }
+        if status_filter in status_map:
+            flights_list = flights_list.filter(status=status_map[status_filter])
+    
+    if date_filter:
+        try:
+            filter_date = timezone.datetime.strptime(date_filter, '%Y-%m-%d').date()
+            flights_list = flights_list.filter(departure_time__date=filter_date)
+        except ValueError:
+            pass  # Игнорируем неверный формат даты
+    
+    # Получаем уникальные города для фильтров
+    departure_cities = Airport.objects.values_list('city', flat=True).distinct().order_by('city')
+    arrival_cities = Airport.objects.values_list('city', flat=True).distinct().order_by('city')
+    
+    # Формируем номер рейса (GQ + ID рейса)
+    flights_with_numbers = []
+    for flight in flights_list:
+        flight_number_display = f"GQ{flight.id_flight:03d}"
+        flights_with_numbers.append({
+            'flight': flight,
+            'flight_number': flight_number_display,
+            'departure_airport': flight.departure_airport_id,
+            'arrival_airport': flight.arrival_airport_id,
+            'airplane': flight.airplane_id,
+        })
+    
+    # Пагинация: 10 элементов на страницу
+    paginator = Paginator(flights_with_numbers, 10)
+    page = request.GET.get('page', 1)
+    
+    try:
+        flights_page = paginator.page(page)
+    except PageNotAnInteger:
+        # Если page не является целым числом, показываем первую страницу
+        flights_page = paginator.page(1)
+    except EmptyPage:
+        # Если page выходит за пределы диапазона, показываем последнюю страницу
+        flights_page = paginator.page(paginator.num_pages)
+    
+    context = {
+        'flights': flights_page,
+        'departure_cities': departure_cities,
+        'arrival_cities': arrival_cities,
+        'current_filters': {
+            'departure': departure_city,
+            'arrival': arrival_city,
+            'status': status_filter,
+            'date': date_filter,
+            'flight_number': flight_number,
+        }
+    }
+    
+    # Если это AJAX запрос, возвращаем JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        # Рендерим таблицу и пагинацию в HTML
+        table_html = render_to_string('flights_table.html', {'flights': flights_page}, request=request)
+        pagination_html = render_to_string('flights_pagination.html', {
+            'flights': flights_page,
+            'current_filters': context['current_filters']
+        }, request=request)
+        
+        return JsonResponse({
+            'table_html': table_html,
+            'pagination_html': pagination_html,
+            'page': flights_page.number,
+            'total_pages': paginator.num_pages
+        })
+    
+    return render(request, 'flights.html', context)
 
 
 def login_view(request):
