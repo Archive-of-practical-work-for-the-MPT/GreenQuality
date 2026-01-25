@@ -294,7 +294,8 @@
 .admin-panel-container {
     min-height: calc(100vh - 200px);
     padding: 40px 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    transition: background 0.3s ease;
 }
 
 .admin-header {
@@ -304,13 +305,13 @@
 }
 
 .admin-header h1 {
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-size: 36px;
     margin-bottom: 10px;
 }
 
 .admin-header p {
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     font-size: 18px;
 }
 
@@ -323,17 +324,18 @@
 }
 
 .admin-sidebar {
-    background: white;
+    background: var(--bg-color, white);
     border-radius: 15px;
     padding: 20px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 5px 15px var(--shadow-color, rgba(0, 0, 0, 0.08));
     height: fit-content;
     position: sticky;
     top: 20px;
+    transition: background 0.3s ease;
 }
 
 .admin-sidebar h3 {
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-size: 20px;
     margin-bottom: 15px;
     padding-bottom: 10px;
@@ -353,7 +355,7 @@
 .table-link {
     display: block;
     padding: 12px 15px;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     text-decoration: none;
     border-radius: 8px;
     transition: all 0.3s ease;
@@ -361,21 +363,22 @@
 }
 
 .table-link:hover {
-    background: #f8f9fa;
+    background: var(--bg-secondary, #f8f9fa);
     color: #0bda51;
 }
 
 .table-link.active {
     background: linear-gradient(135deg, #0bda51 0%, #08a53d 100%);
-    color: white;
+    color: #ffffff;
     font-weight: 600;
 }
 
 .admin-main {
-    background: white;
+    background: var(--bg-color, white);
     border-radius: 15px;
     padding: 30px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 5px 15px var(--shadow-color, rgba(0, 0, 0, 0.08));
+    transition: background 0.3s ease;
 }
 
 .admin-content-header {
@@ -384,18 +387,18 @@
     align-items: center;
     margin-bottom: 25px;
     padding-bottom: 20px;
-    border-bottom: 2px solid #e1e8ed;
+    border-bottom: 2px solid var(--border-color, #e1e8ed);
 }
 
 .admin-content-header h2 {
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-size: 24px;
     margin: 0;
 }
 
 .btn-create {
     background: linear-gradient(135deg, #0bda51, #08a53d);
-    color: white;
+    color: #ffffff;
     border: none;
     padding: 12px 24px;
     border-radius: 10px;
@@ -421,25 +424,25 @@
 }
 
 .admin-table thead {
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, var(--bg-secondary, #f8f9fa) 0%, var(--bg-secondary, #e9ecef) 100%);
 }
 
 .admin-table th {
     padding: 15px;
     text-align: left;
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     border-bottom: 2px solid #0bda51;
 }
 
 .admin-table td {
     padding: 12px 15px;
-    border-bottom: 1px solid #e1e8ed;
-    color: #2c3e50;
+    border-bottom: 1px solid var(--border-color, #e1e8ed);
+    color: var(--text-secondary, #2c3e50);
 }
 
 .admin-table tbody tr:hover {
-    background: #f8f9fa;
+    background: var(--bg-secondary, #f8f9fa);
 }
 
 .actions-cell {
@@ -480,7 +483,7 @@
 .empty-cell {
     text-align: center;
     padding: 40px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
 }
 
 /* Модальное окно */
@@ -497,14 +500,15 @@
 }
 
 .modal-content {
-    background-color: white;
+    background-color: var(--bg-color, white);
     margin: 5% auto;
     padding: 30px;
     border-radius: 20px;
     width: 90%;
     max-width: 600px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 10px 40px var(--shadow-color, rgba(0, 0, 0, 0.3));
     position: relative;
+    transition: background-color 0.3s ease;
 }
 
 .close {
@@ -524,7 +528,7 @@
 
 .modal-content h2 {
     margin: 0 0 25px 0;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-size: 24px;
 }
 
@@ -542,7 +546,7 @@
 
 .form-group label {
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     margin-bottom: 8px;
     font-size: 14px;
 }
@@ -551,10 +555,12 @@
 .form-group select,
 .form-group textarea {
     padding: 12px;
-    border: 2px solid #e1e8ed;
+    border: 2px solid var(--border-color, #e1e8ed);
     border-radius: 8px;
     font-size: 14px;
     transition: all 0.3s ease;
+    background: var(--bg-color, white);
+    color: var(--text-color, #2c3e50);
 }
 
 .form-group input:focus,
@@ -570,14 +576,14 @@
     justify-content: flex-end;
     gap: 15px;
     padding-top: 20px;
-    border-top: 1px solid #e1e8ed;
+    border-top: 1px solid var(--border-color, #e1e8ed);
 }
 
 .btn-cancel {
     padding: 12px 24px;
-    background: #f8f9fa;
-    color: #2c3e50;
-    border: 2px solid #e1e8ed;
+    background: var(--bg-secondary, #f8f9fa);
+    color: var(--text-secondary, #2c3e50);
+    border: 2px solid var(--border-color, #e1e8ed);
     border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
@@ -585,13 +591,13 @@
 }
 
 .btn-cancel:hover {
-    background: #e9ecef;
+    background: var(--bg-secondary, #e9ecef);
 }
 
 .btn-save {
     padding: 12px 24px;
     background: linear-gradient(135deg, #0bda51, #08a53d);
-    color: white;
+    color: #000000;
     border: none;
     border-radius: 10px;
     font-weight: 600;

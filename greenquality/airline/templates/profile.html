@@ -482,7 +482,8 @@
 .profile-container {
     min-height: calc(100vh - 200px);
     padding: 40px 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    transition: background 0.3s ease;
 }
 
 .messages-container {
@@ -525,11 +526,12 @@
 }
 
 .profile-card {
-    background: white;
+    background: var(--bg-color, white);
     border-radius: 20px;
     padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px var(--shadow-color, rgba(0, 0, 0, 0.1));
     text-align: center;
+    transition: background 0.3s ease;
 }
 
 .profile-avatar {
@@ -555,27 +557,27 @@
 }
 
 .profile-name {
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-size: 24px;
     margin-bottom: 8px;
     font-weight: 700;
 }
 
 .profile-email {
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     font-size: 14px;
     margin-bottom: 5px;
 }
 
 .profile-phone {
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     font-size: 14px;
 }
 
 .profile-stats {
     margin-top: 25px;
     padding-top: 25px;
-    border-top: 1px solid #e1e8ed;
+    border-top: 1px solid var(--border-color, #e1e8ed);
 }
 
 .stat-item {
@@ -592,21 +594,23 @@
 }
 
 .stat-label {
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     font-size: 14px;
 }
 
 .profile-main {
-    background: white;
+    background: var(--bg-color, white);
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px var(--shadow-color, rgba(0, 0, 0, 0.1));
     overflow: hidden;
+    transition: background 0.3s ease;
 }
 
 .profile-tabs {
     display: flex;
-    border-bottom: 2px solid #e1e8ed;
-    background: #f8f9fa;
+    border-bottom: 2px solid var(--border-color, #e1e8ed);
+    background: var(--bg-secondary, #f8f9fa);
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .tab-button {
@@ -617,7 +621,7 @@
     cursor: pointer;
     font-size: 16px;
     font-weight: 600;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -633,7 +637,7 @@
 
 .tab-button.active {
     color: #0bda51;
-    background: white;
+    background: var(--bg-color, white);
 }
 
 .tab-button.active::after {
@@ -661,7 +665,7 @@
 }
 
 .content-title {
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-size: 28px;
     margin-bottom: 30px;
     font-weight: 700;
@@ -687,16 +691,18 @@
 .form-group label {
     margin-bottom: 8px;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-size: 14px;
 }
 
 .form-group input {
     padding: 15px;
-    border: 2px solid #e1e8ed;
+    border: 2px solid var(--border-color, #e1e8ed);
     border-radius: 12px;
     font-size: 16px;
     transition: all 0.3s ease;
+    background: var(--bg-color, white);
+    color: var(--text-color, #2c3e50);
 }
 
 .form-group input:focus {
@@ -707,7 +713,7 @@
 
 .submit-btn {
     background: linear-gradient(135deg, #0bda51, #08a53d);
-    color: white;
+    color: #ffffff;
     border: none;
     padding: 15px 40px;
     border-radius: 12px;
@@ -732,10 +738,10 @@
 }
 
 .ticket-card {
-    background: #f8f9fa;
+    background: var(--bg-secondary, #f8f9fa);
     border-radius: 16px;
     padding: 25px;
-    border: 2px solid #e1e8ed;
+    border: 2px solid var(--border-color, #e1e8ed);
     transition: all 0.3s ease;
 }
 
@@ -751,7 +757,7 @@
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 20px;
-    border-bottom: 2px solid #e1e8ed;
+    border-bottom: 2px solid var(--border-color, #e1e8ed);
 }
 
 .ticket-route {
@@ -775,7 +781,7 @@
 
 .airport-name {
     font-size: 14px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
 }
 
 .route-arrow {
@@ -828,7 +834,7 @@
 
 .info-label {
     font-size: 12px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     margin-bottom: 5px;
     text-transform: uppercase;
     font-weight: 600;
@@ -836,7 +842,7 @@
 
 .info-value {
     font-size: 16px;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-weight: 600;
 }
 
@@ -846,7 +852,7 @@
     align-items: center;
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid #e1e8ed;
+    border-top: 1px solid var(--border-color, #e1e8ed);
 }
 
 .ticket-price {
@@ -856,7 +862,7 @@
 
 .price-label {
     font-size: 12px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     margin-bottom: 5px;
 }
 
@@ -875,28 +881,28 @@
 
 .payment-date {
     font-size: 14px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
 }
 
 .payment-method {
     font-size: 14px;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-weight: 600;
 }
 
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
 }
 
 .empty-state svg {
     margin-bottom: 20px;
-    color: #bdc3c7;
+    color: var(--text-muted, #bdc3c7);
 }
 
 .empty-state h3 {
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     margin-bottom: 10px;
     font-size: 24px;
 }
@@ -967,7 +973,7 @@
     align-items: center;
     margin-bottom: 30px;
     padding-bottom: 20px;
-    border-bottom: 2px solid #e1e8ed;
+    border-bottom: 2px solid var(--border-color, #e1e8ed);
 }
 
 .export-buttons {
@@ -1019,15 +1025,16 @@
     height: 400px;
     margin-top: 20px;
     padding: 20px;
-    background: white;
+    background: var(--bg-color, white);
     border-radius: 15px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 10px var(--shadow-color, rgba(0, 0, 0, 0.05));
+    transition: background 0.3s ease;
 }
 
 .section-title {
     font-size: 20px;
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     margin-bottom: 20px;
     padding-bottom: 10px;
     border-bottom: 2px solid #0bda51;
@@ -1040,8 +1047,8 @@
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border: 2px solid #e1e8ed;
+    background: linear-gradient(135deg, var(--bg-secondary, #f8f9fa) 0%, var(--bg-color, #ffffff) 100%);
+    border: 2px solid var(--border-color, #e1e8ed);
     border-radius: 15px;
     padding: 20px;
     display: flex;
@@ -1075,13 +1082,13 @@
 .stat-number {
     font-size: 28px;
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     margin-bottom: 5px;
 }
 
 .stat-description {
     font-size: 14px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     line-height: 1.4;
 }
 
@@ -1092,8 +1099,8 @@
 }
 
 .route-item {
-    background: #f8f9fa;
-    border: 2px solid #e1e8ed;
+    background: var(--bg-secondary, #f8f9fa);
+    border: 2px solid var(--border-color, #e1e8ed);
     border-radius: 10px;
     padding: 15px 20px;
     display: flex;
@@ -1104,13 +1111,13 @@
 
 .route-item:hover {
     border-color: #0bda51;
-    background: #f0fff4;
+    background: var(--bg-secondary, #f0fff4);
 }
 
 .route-path {
     font-size: 16px;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
 }
 
 .route-count {

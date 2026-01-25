@@ -35,6 +35,11 @@
                         <li><a href="{% url 'login' %}">Вход</a></li>
                         <li><a href="{% url 'register' %}">Регистрация</a></li>
                     {% endif %}
+                    <li>
+                        <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему">
+                            <span class="theme-toggle-icon" id="themeIcon">🌙</span>
+                        </button>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -122,6 +127,35 @@
                 });
             });
         });
+        
+        // Переключение темы
+        (function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const html = document.documentElement;
+            
+            // Загружаем сохраненную тему из localStorage
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                html.setAttribute('data-theme', 'dark');
+                themeIcon.textContent = '☀️';
+            } else {
+                html.setAttribute('data-theme', 'light');
+                themeIcon.textContent = '🌙';
+            }
+            
+            // Обработчик переключения темы
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                // Обновляем иконку
+                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            });
+        })();
     </script>
     {% block extra_js %}{% endblock %}
 </body>
