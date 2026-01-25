@@ -44,10 +44,21 @@
                     {% endif %}
                 </div>
                 <div class="profile-stats">
-                    <div class="stat-item">
-                        <span class="stat-value">{{ total_tickets }}</span>
-                        <span class="stat-label">Билетов</span>
-                    </div>
+                    {% if is_admin %}
+                        <div class="stat-item">
+                            <span class="stat-value">{{ total_users }}</span>
+                            <span class="stat-label">Пользователей</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">{{ total_airplanes }}</span>
+                            <span class="stat-label">Самолетов</span>
+                        </div>
+                    {% else %}
+                        <div class="stat-item">
+                            <span class="stat-value">{{ total_tickets }}</span>
+                            <span class="stat-label">Билетов</span>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </aside>
@@ -55,23 +66,34 @@
         <!-- Основной контент с вкладками -->
         <main class="profile-main">
             <div class="profile-tabs">
-                <button class="tab-button active" onclick="switchTab('info')">
+                <button class="tab-button active" onclick="switchTab('info', event)">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
                         <circle cx="12" cy="7" r="4"></circle>
                     </svg>
                     Личная информация
                 </button>
-                <button class="tab-button" onclick="switchTab('tickets')">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                    История покупок
-                </button>
+                {% if is_admin %}
+                    <button class="tab-button" onclick="switchTab('statistics', event)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                        Статистика
+                    </button>
+                {% else %}
+                    <button class="tab-button" onclick="switchTab('tickets', event)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        История покупок
+                    </button>
+                {% endif %}
             </div>
 
             <!-- Вкладка: Личная информация -->
@@ -133,94 +155,265 @@
                 </div>
             </div>
 
-            <!-- Вкладка: История покупок -->
-            <div id="tab-tickets" class="tab-content">
-                <div class="content-card">
-                    <h3 class="content-title">История покупок билетов</h3>
-                    
-                    {% if tickets %}
-                        <div class="tickets-list">
-                            {% for item in tickets %}
-                                <div class="ticket-card">
-                                    <div class="ticket-header">
-                                        <div class="ticket-route">
-                                            <div class="route-point">
-                                                <span class="airport-code">{{ item.flight.departure_airport_id.id_airport }}</span>
-                                                <span class="airport-name">{{ item.flight.departure_airport_id.city }}</span>
-                                            </div>
-                                            <div class="route-arrow">
-                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                                    <polyline points="12 5 19 12 12 19"></polyline>
-                                                </svg>
-                                            </div>
-                                            <div class="route-point">
-                                                <span class="airport-code">{{ item.flight.arrival_airport_id.id_airport }}</span>
-                                                <span class="airport-name">{{ item.flight.arrival_airport_id.city }}</span>
-                                            </div>
-                                        </div>
-                                        <div class="ticket-status status-{{ item.ticket.status|lower }}">
-                                            {{ item.ticket.get_status_display }}
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="ticket-body">
-                                        <div class="ticket-info-row">
-                                            <div class="info-item">
-                                                <span class="info-label">Дата вылета</span>
-                                                <span class="info-value">{{ item.flight.departure_time|date:"d.m.Y H:i" }}</span>
-                                            </div>
-                                            <div class="info-item">
-                                                <span class="info-label">Дата прилета</span>
-                                                <span class="info-value">{{ item.flight.arrival_time|date:"d.m.Y H:i" }}</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="ticket-info-row">
-                                            <div class="info-item">
-                                                <span class="info-label">Класс</span>
-                                                <span class="info-value">{{ item.class_name }}</span>
-                                            </div>
-                                            <div class="info-item">
-                                                <span class="info-label">Место</span>
-                                                <span class="info-value">{{ item.ticket.seat_number }}</span>
-                                            </div>
-                                            <div class="info-item">
-                                                <span class="info-label">Пассажир</span>
-                                                <span class="info-value">{{ item.passenger.first_name }} {{ item.passenger.last_name }}</span>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="ticket-footer">
-                                            <div class="ticket-price">
-                                                <span class="price-label">Стоимость</span>
-                                                <span class="price-value">{{ item.ticket.price }} ₽</span>
-                                            </div>
-                                            <div class="ticket-payment-info">
-                                                <span class="payment-date">Оплачено: {{ item.payment.payment_date|date:"d.m.Y H:i" }}</span>
-                                                <span class="payment-method">{{ item.payment.get_payment_method_display }}</span>
-                                            </div>
-                                        </div>
+            {% if is_admin %}
+                <!-- Вкладка: Статистика (для администратора) -->
+                <div id="tab-statistics" class="tab-content" style="display: none;">
+                    <div class="content-card">
+                        <h3 class="content-title">Статистика системы</h3>
+                        
+                        <!-- Статистика по пользователям -->
+                        <div class="statistics-section">
+                            <h4 class="section-title">Пользователи</h4>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon">👥</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ total_users }}</div>
+                                        <div class="stat-description">Всего пользователей</div>
                                     </div>
                                 </div>
-                            {% endfor %}
+                                <div class="stat-card">
+                                    <div class="stat-icon">📧</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ total_accounts }}</div>
+                                        <div class="stat-description">Всего аккаунтов</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">🎫</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ users_with_tickets }}</div>
+                                        <div class="stat-description">Пользователей с билетами</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    {% else %}
-                        <div class="empty-state">
-                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <path d="M9 12l2 2 4-4"></path>
-                                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
-                                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
-                                <path d="M13 12h3a2 2 0 0 1 2 2v1"></path>
-                                <path d="M5 12H2a2 2 0 0 0-2 2v1"></path>
-                            </svg>
-                            <h3>У вас пока нет покупок</h3>
-                            <p>После покупки билетов они появятся здесь</p>
-                            <a href="{% url 'flights' %}" class="empty-state-btn">Посмотреть рейсы</a>
+
+                        <!-- Статистика по самолетам -->
+                        <div class="statistics-section">
+                            <h4 class="section-title">Самолеты</h4>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon">✈️</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ total_airplanes }}</div>
+                                        <div class="stat-description">Всего самолетов</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">💺</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ total_capacity }}</div>
+                                        <div class="stat-description">Общая вместимость</div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    {% endif %}
+
+                        <!-- Статистика по рейсам -->
+                        <div class="statistics-section">
+                            <h4 class="section-title">Рейсы</h4>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon">🛫</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ total_flights }}</div>
+                                        <div class="stat-description">Всего рейсов</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">📅</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ scheduled_flights }}</div>
+                                        <div class="stat-description">Запланировано</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">✅</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ completed_flights }}</div>
+                                        <div class="stat-description">Выполнено</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">❌</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ cancelled_flights }}</div>
+                                        <div class="stat-description">Отменено</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Статистика по билетам -->
+                        <div class="statistics-section">
+                            <h4 class="section-title">Билеты</h4>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon">🎟️</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ total_tickets }}</div>
+                                        <div class="stat-description">Всего билетов</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">💳</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ paid_tickets }}</div>
+                                        <div class="stat-description">Оплачено</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">📋</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ booked_tickets }}</div>
+                                        <div class="stat-description">Забронировано</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Статистика по платежам -->
+                        <div class="statistics-section">
+                            <h4 class="section-title">Финансы</h4>
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-icon">💰</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ total_revenue|floatformat:0 }} ₽</div>
+                                        <div class="stat-description">Общая выручка</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">💵</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ recent_revenue|floatformat:0 }} ₽</div>
+                                        <div class="stat-description">За последние 30 дней</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">📊</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ total_payments }}</div>
+                                        <div class="stat-description">Всего платежей</div>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-icon">✅</div>
+                                    <div class="stat-content">
+                                        <div class="stat-number">{{ completed_payments }}</div>
+                                        <div class="stat-description">Завершено</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Популярные направления -->
+                        {% if popular_routes %}
+                            <div class="statistics-section">
+                                <h4 class="section-title">Популярные направления</h4>
+                                <div class="routes-list">
+                                    {% for route in popular_routes %}
+                                        <div class="route-item">
+                                            <span class="route-path">{{ route.departure_airport_id__city }} → {{ route.arrival_airport_id__city }}</span>
+                                            <span class="route-count">{{ route.ticket_count }} билетов</span>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
+            {% else %}
+                <!-- Вкладка: История покупок (для обычных пользователей) -->
+                <div id="tab-tickets" class="tab-content">
+                    <div class="content-card">
+                        <h3 class="content-title">История покупок билетов</h3>
+                        
+                        {% if tickets %}
+                            <div class="tickets-list">
+                                {% for item in tickets %}
+                                    <div class="ticket-card">
+                                        <div class="ticket-header">
+                                            <div class="ticket-route">
+                                                <div class="route-point">
+                                                    <span class="airport-code">{{ item.flight.departure_airport_id.id_airport }}</span>
+                                                    <span class="airport-name">{{ item.flight.departure_airport_id.city }}</span>
+                                                </div>
+                                                <div class="route-arrow">
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                        <polyline points="12 5 19 12 12 19"></polyline>
+                                                    </svg>
+                                                </div>
+                                                <div class="route-point">
+                                                    <span class="airport-code">{{ item.flight.arrival_airport_id.id_airport }}</span>
+                                                    <span class="airport-name">{{ item.flight.arrival_airport_id.city }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="ticket-status status-{{ item.ticket.status|lower }}">
+                                                {{ item.ticket.get_status_display }}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="ticket-body">
+                                            <div class="ticket-info-row">
+                                                <div class="info-item">
+                                                    <span class="info-label">Дата вылета</span>
+                                                    <span class="info-value">{{ item.flight.departure_time|date:"d.m.Y H:i" }}</span>
+                                                </div>
+                                                <div class="info-item">
+                                                    <span class="info-label">Дата прилета</span>
+                                                    <span class="info-value">{{ item.flight.arrival_time|date:"d.m.Y H:i" }}</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="ticket-info-row">
+                                                <div class="info-item">
+                                                    <span class="info-label">Класс</span>
+                                                    <span class="info-value">{{ item.class_name }}</span>
+                                                </div>
+                                                <div class="info-item">
+                                                    <span class="info-label">Место</span>
+                                                    <span class="info-value">{{ item.ticket.seat_number }}</span>
+                                                </div>
+                                                <div class="info-item">
+                                                    <span class="info-label">Пассажир</span>
+                                                    <span class="info-value">{{ item.passenger.first_name }} {{ item.passenger.last_name }}</span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="ticket-footer">
+                                                <div class="ticket-price">
+                                                    <span class="price-label">Стоимость</span>
+                                                    <span class="price-value">{{ item.ticket.price }} ₽</span>
+                                                </div>
+                                                <div class="ticket-payment-info">
+                                                    <span class="payment-date">Оплачено: {{ item.payment.payment_date|date:"d.m.Y H:i" }}</span>
+                                                    <span class="payment-method">{{ item.payment.get_payment_method_display }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 12l2 2 4-4"></path>
+                                    <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+                                    <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+                                    <path d="M13 12h3a2 2 0 0 1 2 2v1"></path>
+                                    <path d="M5 12H2a2 2 0 0 0-2 2v1"></path>
+                                </svg>
+                                <h3>У вас пока нет покупок</h3>
+                                <p>После покупки билетов они появятся здесь</p>
+                                <a href="{% url 'flights' %}" class="empty-state-btn">Посмотреть рейсы</a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endif %}
         </main>
     </div>
 </div>
@@ -704,15 +897,121 @@
         padding: 20px;
     }
 }
+
+/* Стили для статистики */
+.statistics-section {
+    margin-bottom: 40px;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #0bda51;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+    border: 2px solid #e1e8ed;
+    border-radius: 15px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(11, 218, 81, 0.2);
+    border-color: #0bda51;
+}
+
+.stat-icon {
+    font-size: 36px;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #0bda51 0%, #08a53d 100%);
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.stat-description {
+    font-size: 14px;
+    color: #7f8c8d;
+    line-height: 1.4;
+}
+
+.routes-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.route-item {
+    background: #f8f9fa;
+    border: 2px solid #e1e8ed;
+    border-radius: 10px;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+}
+
+.route-item:hover {
+    border-color: #0bda51;
+    background: #f0fff4;
+}
+
+.route-path {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.route-count {
+    font-size: 14px;
+    color: #0bda51;
+    font-weight: 600;
+    background: #e8f5e9;
+    padding: 5px 12px;
+    border-radius: 8px;
+}
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-function switchTab(tabName) {
+function switchTab(tabName, event) {
+    event = event || window.event;
+    
     // Скрываем все вкладки
     document.querySelectorAll('.tab-content').forEach(tab => {
         tab.classList.remove('active');
+        tab.style.display = 'none';
     });
     
     // Убираем активный класс со всех кнопок
@@ -721,10 +1020,26 @@ function switchTab(tabName) {
     });
     
     // Показываем выбранную вкладку
-    document.getElementById('tab-' + tabName).classList.add('active');
+    const selectedTab = document.getElementById('tab-' + tabName);
+    if (selectedTab) {
+        selectedTab.classList.add('active');
+        selectedTab.style.display = 'block';
+    }
     
     // Добавляем активный класс к выбранной кнопке
-    event.target.closest('.tab-button').classList.add('active');
+    if (event && event.target) {
+        const button = event.target.closest('.tab-button');
+        if (button) {
+            button.classList.add('active');
+        } else {
+            // Если не нашли через closest, ищем по onclick
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes("'" + tabName + "'")) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+    }
 }
 
 // Функция для форматирования даты из формата дд.мм.гггг в формат для отображения

@@ -1,0 +1,910 @@
+{% extends 'base.html' %}
+
+{% block title %}Панель администратора - GreenQuality Airlines{% endblock %}
+
+{% block content %}
+<div class="admin-panel-container">
+    <div class="admin-header">
+        <h1>Панель администратора</h1>
+        <p>Управление всеми таблицами базы данных</p>
+    </div>
+
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="message message-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="admin-panel-wrapper">
+        <!-- Боковая панель с выбором таблиц -->
+        <aside class="admin-sidebar">
+            <h3>Таблицы</h3>
+            <ul class="table-list">
+                {% for table_name, info in models_info.items %}
+                    <li>
+                        <a href="?table={{ table_name }}" 
+                           class="table-link {% if selected_table == table_name %}active{% endif %}">
+                            {{ info.name }}
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </aside>
+
+        <!-- Основной контент -->
+        <main class="admin-main">
+            <div class="admin-content-header">
+                <h2>{{ model_info.name }}</h2>
+                {% if not model_info.readonly %}
+                    <button class="btn-create" onclick="showCreateForm()">+ Создать</button>
+                {% endif %}
+            </div>
+
+            <!-- Таблица данных -->
+            <div class="admin-table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            {% for field in fields %}
+                                <th>{{ field }}</th>
+                            {% endfor %}
+                            {% if not model_info.readonly %}
+                                <th>Действия</th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for obj in objects %}
+                            <tr>
+                                {% for field in fields %}
+                                    <td>
+                                        {% if field|slice:"-3:" == "_id" %}
+                                            {% if field == "role_id" %}
+                                                {{ obj.role_id|default:"-" }}
+                                            {% elif field == "account_id" %}
+                                                {{ obj.account_id|default:"-" }}
+                                            {% elif field == "user_id" %}
+                                                {{ obj.user_id|default:"-" }}
+                                            {% elif field == "airplane_id" %}
+                                                {{ obj.airplane_id|default:"-" }}
+                                            {% elif field == "departure_airport_id" %}
+                                                {{ obj.departure_airport_id|default:"-" }}
+                                            {% elif field == "arrival_airport_id" %}
+                                                {{ obj.arrival_airport_id|default:"-" }}
+                                            {% elif field == "class_id" %}
+                                                {{ obj.class_id|default:"-" }}
+                                            {% elif field == "passenger_id" %}
+                                                {{ obj.passenger_id|default:"-" }}
+                                            {% elif field == "flight_id" %}
+                                                {{ obj.flight_id|default:"-" }}
+                                            {% elif field == "payment_id" %}
+                                                {{ obj.payment_id|default:"-" }}
+                                            {% elif field == "ticket_id" %}
+                                                {{ obj.ticket_id|default:"-" }}
+                                            {% elif field == "baggage_type_id" %}
+                                                {{ obj.baggage_type_id|default:"-" }}
+                                            {% elif field == "changed_by" %}
+                                                {{ obj.changed_by|default:"-" }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        {% else %}
+                                            {% if field == "id_role" %}
+                                                {{ obj.id_role }}
+                                            {% elif field == "id_account" %}
+                                                {{ obj.id_account }}
+                                            {% elif field == "id_user" %}
+                                                {{ obj.id_user }}
+                                            {% elif field == "id_airport" %}
+                                                {{ obj.id_airport }}
+                                            {% elif field == "id_airplane" %}
+                                                {{ obj.id_airplane }}
+                                            {% elif field == "id_flight" %}
+                                                {{ obj.id_flight }}
+                                            {% elif field == "id_passenger" %}
+                                                {{ obj.id_passenger }}
+                                            {% elif field == "id_class" %}
+                                                {{ obj.id_class }}
+                                            {% elif field == "id_payment" %}
+                                                {{ obj.id_payment }}
+                                            {% elif field == "id_ticket" %}
+                                                {{ obj.id_ticket }}
+                                            {% elif field == "id_baggage_type" %}
+                                                {{ obj.id_baggage_type }}
+                                            {% elif field == "id_baggage" %}
+                                                {{ obj.id_baggage }}
+                                            {% elif field == "id_audit" %}
+                                                {{ obj.id_audit }}
+                                            {% elif field == "role_name" %}
+                                                {{ obj.role_name }}
+                                            {% elif field == "email" %}
+                                                {{ obj.email }}
+                                            {% elif field == "first_name" %}
+                                                {{ obj.first_name|default:"-" }}
+                                            {% elif field == "last_name" %}
+                                                {{ obj.last_name|default:"-" }}
+                                            {% elif field == "patronymic" %}
+                                                {{ obj.patronymic|default:"-" }}
+                                            {% elif field == "phone" %}
+                                                {{ obj.phone|default:"-" }}
+                                            {% elif field == "passport_number" %}
+                                                {{ obj.passport_number|default:"-" }}
+                                            {% elif field == "birthday" %}
+                                                {% if obj.birthday %}
+                                                    {{ obj.birthday|date:"d.m.Y" }}
+                                                {% else %}
+                                                    -
+                                                {% endif %}
+                                            {% elif field == "name" %}
+                                                {{ obj.name }}
+                                            {% elif field == "city" %}
+                                                {{ obj.city }}
+                                            {% elif field == "country" %}
+                                                {{ obj.country }}
+                                            {% elif field == "model" %}
+                                                {{ obj.model }}
+                                            {% elif field == "registration_number" %}
+                                                {{ obj.registration_number }}
+                                            {% elif field == "capacity" %}
+                                                {{ obj.capacity }}
+                                            {% elif field == "economy_capacity" %}
+                                                {{ obj.economy_capacity|default:"-" }}
+                                            {% elif field == "business_capacity" %}
+                                                {{ obj.business_capacity|default:"-" }}
+                                            {% elif field == "first_capacity" %}
+                                                {{ obj.first_capacity|default:"-" }}
+                                            {% elif field == "rows" %}
+                                                {{ obj.rows|default:"-" }}
+                                            {% elif field == "seats_row" %}
+                                                {{ obj.seats_row|default:"-" }}
+                                            {% elif field == "departure_time" %}
+                                                {{ obj.departure_time|date:"d.m.Y H:i" }}
+                                            {% elif field == "arrival_time" %}
+                                                {{ obj.arrival_time|date:"d.m.Y H:i" }}
+                                            {% elif field == "status" %}
+                                                {{ obj.get_status_display }}
+                                            {% elif field == "class_name" %}
+                                                {{ obj.get_class_name_display }}
+                                            {% elif field == "payment_date" %}
+                                                {{ obj.payment_date|date:"d.m.Y H:i" }}
+                                            {% elif field == "total_cost" %}
+                                                {{ obj.total_cost }} ₽
+                                            {% elif field == "payment_method" %}
+                                                {{ obj.get_payment_method_display }}
+                                            {% elif field == "seat_number" %}
+                                                {{ obj.seat_number }}
+                                            {% elif field == "price" %}
+                                                {{ obj.price }} ₽
+                                            {% elif field == "type_name" %}
+                                                {{ obj.get_type_name_display }}
+                                            {% elif field == "max_weight_kg" %}
+                                                {{ obj.max_weight_kg }} кг
+                                            {% elif field == "description" %}
+                                                {{ obj.description|default:"-"|truncatewords:10 }}
+                                            {% elif field == "base_price" %}
+                                                {{ obj.base_price }} ₽
+                                            {% elif field == "weight_kg" %}
+                                                {{ obj.weight_kg }} кг
+                                            {% elif field == "baggage_tag" %}
+                                                {{ obj.baggage_tag }}
+                                            {% elif field == "registered_at" %}
+                                                {{ obj.registered_at|date:"d.m.Y H:i" }}
+                                            {% elif field == "created_at" %}
+                                                {{ obj.created_at|date:"d.m.Y H:i" }}
+                                            {% elif field == "table_name" %}
+                                                {{ obj.table_name }}
+                                            {% elif field == "record_id" %}
+                                                {{ obj.record_id }}
+                                            {% elif field == "operation" %}
+                                                {{ obj.get_operation_display }}
+                                            {% elif field == "changed_at" %}
+                                                {{ obj.changed_at|date:"d.m.Y H:i" }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                                {% if not model_info.readonly %}
+                                    <td class="actions-cell">
+                                        {% if selected_table == "Role" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_role }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_role }})">Удалить</button>
+                                        {% elif selected_table == "Account" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_account }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_account }})">Удалить</button>
+                                        {% elif selected_table == "User" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_user }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_user }})">Удалить</button>
+                                        {% elif selected_table == "Airport" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', '{{ obj.id_airport }}')">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', '{{ obj.id_airport }}')">Удалить</button>
+                                        {% elif selected_table == "Airplane" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_airplane }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_airplane }})">Удалить</button>
+                                        {% elif selected_table == "Flight" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_flight }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_flight }})">Удалить</button>
+                                        {% elif selected_table == "Passenger" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_passenger }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_passenger }})">Удалить</button>
+                                        {% elif selected_table == "Class" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_class }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_class }})">Удалить</button>
+                                        {% elif selected_table == "Payment" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_payment }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_payment }})">Удалить</button>
+                                        {% elif selected_table == "Ticket" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_ticket }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_ticket }})">Удалить</button>
+                                        {% elif selected_table == "BaggageType" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_baggage_type }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_baggage_type }})">Удалить</button>
+                                        {% elif selected_table == "Baggage" %}
+                                            <button class="btn-edit" onclick="editRecord('{{ selected_table }}', {{ obj.id_baggage }})">Изменить</button>
+                                            <button class="btn-delete" onclick="deleteRecord('{{ selected_table }}', {{ obj.id_baggage }})">Удалить</button>
+                                        {% endif %}
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="{% if model_info.readonly %}{{ fields|length }}{% else %}{{ fields|length|add:1 }}{% endif %}" class="empty-cell">
+                                    Записей не найдено
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+</div>
+
+<!-- Модальное окно для создания/редактирования -->
+<div id="recordModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal()">&times;</span>
+        <h2 id="modalTitle">Создать запись</h2>
+            <form id="recordForm" method="post" action="{% url 'admin_crud' %}">
+            {% csrf_token %}
+            <input type="hidden" id="recordId" name="record_id">
+            <input type="hidden" id="tableName" name="table_name" value="{{ selected_table }}">
+            <input type="hidden" id="actionType" name="action" value="create">
+            
+            <div id="formFields" class="form-fields">
+                <!-- Поля формы будут добавлены через JavaScript -->
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" class="btn-cancel" onclick="closeModal()">Отмена</button>
+                <button type="submit" class="btn-save">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.admin-panel-container {
+    min-height: calc(100vh - 200px);
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+}
+
+.admin-header {
+    max-width: 1400px;
+    margin: 0 auto 30px;
+    text-align: center;
+}
+
+.admin-header h1 {
+    color: #2c3e50;
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.admin-header p {
+    color: #7f8c8d;
+    font-size: 18px;
+}
+
+.admin-panel-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 30px;
+}
+
+.admin-sidebar {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    height: fit-content;
+    position: sticky;
+    top: 20px;
+}
+
+.admin-sidebar h3 {
+    color: #2c3e50;
+    font-size: 20px;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #0bda51;
+}
+
+.table-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.table-list li {
+    margin-bottom: 8px;
+}
+
+.table-link {
+    display: block;
+    padding: 12px 15px;
+    color: #2c3e50;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.table-link:hover {
+    background: #f8f9fa;
+    color: #0bda51;
+}
+
+.table-link.active {
+    background: linear-gradient(135deg, #0bda51 0%, #08a53d 100%);
+    color: white;
+    font-weight: 600;
+}
+
+.admin-main {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.admin-content-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e1e8ed;
+}
+
+.admin-content-header h2 {
+    color: #2c3e50;
+    font-size: 24px;
+    margin: 0;
+}
+
+.btn-create {
+    background: linear-gradient(135deg, #0bda51, #08a53d);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-create:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11, 218, 81, 0.3);
+}
+
+.admin-table-container {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.admin-table thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.admin-table th {
+    padding: 15px;
+    text-align: left;
+    font-weight: 700;
+    color: #2c3e50;
+    border-bottom: 2px solid #0bda51;
+}
+
+.admin-table td {
+    padding: 12px 15px;
+    border-bottom: 1px solid #e1e8ed;
+    color: #2c3e50;
+}
+
+.admin-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-edit, .btn-delete {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-edit {
+    background: #3498db;
+    color: white;
+}
+
+.btn-edit:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+.btn-delete {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+}
+
+.empty-cell {
+    text-align: center;
+    padding: 40px;
+    color: #7f8c8d;
+}
+
+/* Модальное окно */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 600px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    position: absolute;
+    right: 20px;
+    top: 20px;
+}
+
+.close:hover {
+    color: #000;
+}
+
+.modal-content h2 {
+    margin: 0 0 25px 0;
+    color: #2c3e50;
+    font-size: 24px;
+}
+
+.form-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    padding: 12px;
+    border: 2px solid #e1e8ed;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: #0bda51;
+    box-shadow: 0 0 0 3px rgba(11, 218, 81, 0.1);
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    padding-top: 20px;
+    border-top: 1px solid #e1e8ed;
+}
+
+.btn-cancel {
+    padding: 12px 24px;
+    background: #f8f9fa;
+    color: #2c3e50;
+    border: 2px solid #e1e8ed;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-cancel:hover {
+    background: #e9ecef;
+}
+
+.btn-save {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #0bda51, #08a53d);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11, 218, 81, 0.3);
+}
+</style>
+
+<script>
+// Данные о полях моделей для генерации форм
+const modelFields = {
+    'Role': {
+        'role_name': {type: 'text', label: 'Название роли', required: true}
+    },
+    'Account': {
+        'email': {type: 'email', label: 'Email', required: true},
+        'password': {type: 'password', label: 'Пароль (оставьте пустым, чтобы не изменять)', required: false, placeholder: 'Оставьте пустым, чтобы не изменять пароль'},
+        'role_id': {type: 'select', label: 'Роль', required: true, model: 'Role'}
+    },
+    'User': {
+        'account_id': {type: 'select', label: 'Аккаунт', required: true, model: 'Account'},
+        'first_name': {type: 'text', label: 'Имя', required: true},
+        'last_name': {type: 'text', label: 'Фамилия', required: true},
+        'patronymic': {type: 'text', label: 'Отчество', required: false},
+        'phone': {type: 'text', label: 'Телефон', required: false},
+        'passport_number': {type: 'text', label: 'Номер паспорта', required: false},
+        'birthday': {type: 'date', label: 'Дата рождения', required: false}
+    },
+    'Airport': {
+        'id_airport': {type: 'text', label: 'Код аэропорта (3 символа)', required: true, maxlength: 3},
+        'name': {type: 'text', label: 'Название', required: true},
+        'city': {type: 'text', label: 'Город', required: true},
+        'country': {type: 'text', label: 'Страна', required: true}
+    },
+    'Airplane': {
+        'model': {type: 'text', label: 'Модель', required: true},
+        'registration_number': {type: 'text', label: 'Регистрационный номер', required: true},
+        'capacity': {type: 'number', label: 'Вместимость', required: true},
+        'economy_capacity': {type: 'number', label: 'Эконом класс', required: false},
+        'business_capacity': {type: 'number', label: 'Бизнес класс', required: false},
+        'first_capacity': {type: 'number', label: 'Первый класс', required: false},
+        'rows': {type: 'number', label: 'Количество рядов', required: false},
+        'seats_row': {type: 'number', label: 'Мест в ряду', required: false}
+    },
+    'Flight': {
+        'airplane_id': {type: 'select', label: 'Самолет', required: true, model: 'Airplane'},
+        'departure_airport_id': {type: 'select', label: 'Аэропорт отправления', required: true, model: 'Airport'},
+        'arrival_airport_id': {type: 'select', label: 'Аэропорт прибытия', required: true, model: 'Airport'},
+        'departure_time': {type: 'datetime-local', label: 'Время вылета', required: true},
+        'arrival_time': {type: 'datetime-local', label: 'Время прибытия', required: true},
+        'status': {type: 'select', label: 'Статус', required: true, choices: [
+            ['SCHEDULED', 'Запланирован'],
+            ['DELAYED', 'Задержан'],
+            ['CANCELLED', 'Отменен'],
+            ['COMPLETED', 'Выполнен']
+        ]}
+    },
+    'Passenger': {
+        'first_name': {type: 'text', label: 'Имя', required: true},
+        'last_name': {type: 'text', label: 'Фамилия', required: true},
+        'patronymic': {type: 'text', label: 'Отчество', required: false},
+        'passport_number': {type: 'text', label: 'Номер паспорта', required: true},
+        'birthday': {type: 'date', label: 'Дата рождения', required: true}
+    },
+    'Class': {
+        'class_name': {type: 'select', label: 'Класс', required: true, choices: [
+            ['ECONOMY', 'Эконом'],
+            ['BUSINESS', 'Бизнес'],
+            ['FIRST', 'Первый']
+        ]}
+    },
+    'Payment': {
+        'user_id': {type: 'select', label: 'Пользователь', required: true, model: 'User'},
+        'total_cost': {type: 'number', label: 'Сумма', required: true, step: '0.01'},
+        'payment_method': {type: 'select', label: 'Способ оплаты', required: true, choices: [
+            ['CARD', 'Карта'],
+            ['CASH', 'Наличные'],
+            ['ONLINE', 'Онлайн']
+        ]},
+        'status': {type: 'select', label: 'Статус', required: true, choices: [
+            ['PENDING', 'Ожидает'],
+            ['COMPLETED', 'Завершен'],
+            ['FAILED', 'Ошибка']
+        ]}
+    },
+    'Ticket': {
+        'flight_id': {type: 'select', label: 'Рейс', required: true, model: 'Flight'},
+        'class_id': {type: 'select', label: 'Класс', required: true, model: 'Class'},
+        'seat_number': {type: 'text', label: 'Номер места', required: true},
+        'price': {type: 'number', label: 'Цена', required: true, step: '0.01'},
+        'status': {type: 'select', label: 'Статус', required: true, choices: [
+            ['BOOKED', 'Забронирован'],
+            ['PAID', 'Оплачен'],
+            ['CHECKED_IN', 'Зарегистрирован'],
+            ['CANCELLED', 'Отменен']
+        ]},
+        'passenger_id': {type: 'select', label: 'Пассажир', required: true, model: 'Passenger'},
+        'payment_id': {type: 'select', label: 'Платеж', required: false, model: 'Payment'}
+    },
+    'BaggageType': {
+        'type_name': {type: 'select', label: 'Тип багажа', required: true, choices: [
+            ['HAND', 'Ручная кладь'],
+            ['STANDARD', 'Стандартный'],
+            ['EXTRA', 'Дополнительный'],
+            ['SPORT', 'Спортивный инвентарь'],
+            ['OVERSIZE', 'Крупногабаритный']
+        ]},
+        'max_weight_kg': {type: 'number', label: 'Макс. вес (кг)', required: true, step: '0.01'},
+        'description': {type: 'textarea', label: 'Описание', required: false},
+        'base_price': {type: 'number', label: 'Базовая цена', required: true, step: '0.01'}
+    },
+    'Baggage': {
+        'ticket_id': {type: 'select', label: 'Билет', required: true, model: 'Ticket'},
+        'baggage_type_id': {type: 'select', label: 'Тип багажа', required: true, model: 'BaggageType'},
+        'weight_kg': {type: 'number', label: 'Вес (кг)', required: true, step: '0.01'},
+        'baggage_tag': {type: 'text', label: 'Номер бирки', required: true},
+        'status': {type: 'select', label: 'Статус', required: true, choices: [
+            ['REGISTERED', 'Зарегистрирован'],
+            ['LOADED', 'Загружен'],
+            ['DELIVERED', 'Выдан'],
+            ['LOST', 'Утерян']
+        ]}
+    }
+};
+
+function showCreateForm() {
+    const tableName = '{{ selected_table }}';
+    document.getElementById('modalTitle').textContent = 'Создать запись: {{ model_info.name }}';
+    document.getElementById('actionType').value = 'create';
+    document.getElementById('recordId').value = '';
+    document.getElementById('tableName').value = tableName;
+    
+    generateFormFields(tableName, null, 'create');
+    document.getElementById('recordModal').style.display = 'block';
+}
+
+function editRecord(tableName, recordId) {
+    // Загружаем данные записи через AJAX
+    fetch(`{% url "admin_get_record" %}?table=${tableName}&id=${recordId}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('modalTitle').textContent = 'Изменить запись: {{ model_info.name }}';
+            document.getElementById('actionType').value = 'update';
+            document.getElementById('recordId').value = recordId;
+            document.getElementById('tableName').value = tableName;
+            
+            generateFormFields(tableName, data, 'update');
+            document.getElementById('recordModal').style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            alert('Не удалось загрузить данные записи');
+        });
+}
+
+function generateFormFields(tableName, data, action = 'create') {
+    const formFields = document.getElementById('formFields');
+    formFields.innerHTML = '';
+    
+    const fields = modelFields[tableName];
+    if (!fields) {
+        formFields.innerHTML = '<p>Форма для этой таблицы не настроена</p>';
+        return;
+    }
+    
+    for (const [fieldName, fieldInfo] of Object.entries(fields)) {
+        const formGroup = document.createElement('div');
+        formGroup.className = 'form-group';
+        
+        const label = document.createElement('label');
+        label.textContent = fieldInfo.label;
+        // Для пароля при обновлении делаем необязательным
+        const isRequired = (action === 'update' && fieldName === 'password') ? false : fieldInfo.required;
+        if (isRequired) {
+            label.textContent += ' *';
+        }
+        formGroup.appendChild(label);
+        
+        let input;
+        if (fieldInfo.type === 'select') {
+            input = document.createElement('select');
+            input.name = fieldName;
+            input.id = fieldName;
+            if (fieldInfo.required) {
+                input.required = true;
+            }
+            
+            if (fieldInfo.choices) {
+                fieldInfo.choices.forEach(([value, text]) => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = text;
+                    if (data && data[fieldName] === value) {
+                        option.selected = true;
+                    }
+                    input.appendChild(option);
+                });
+            } else if (fieldInfo.model) {
+                // Загружаем опции через AJAX
+                loadSelectOptions(input, fieldInfo.model, data ? data[fieldName] : null);
+            }
+        } else if (fieldInfo.type === 'textarea') {
+            input = document.createElement('textarea');
+            input.name = fieldName;
+            input.id = fieldName;
+            input.rows = 3;
+            if (data && data[fieldName]) {
+                input.value = data[fieldName];
+            }
+        } else {
+            input = document.createElement('input');
+            input.type = fieldInfo.type;
+            input.name = fieldName;
+            input.id = fieldName;
+            if (fieldInfo.required) {
+                input.required = true;
+            }
+            if (fieldInfo.maxlength) {
+                input.maxLength = fieldInfo.maxlength;
+            }
+            if (fieldInfo.step) {
+                input.step = fieldInfo.step;
+            }
+            if (fieldInfo.placeholder) {
+                input.placeholder = fieldInfo.placeholder;
+            }
+            // Для пароля при редактировании не заполняем значение (чтобы не показывать хэш)
+            if (data && data[fieldName] && fieldInfo.type !== 'password') {
+                if (fieldInfo.type === 'datetime-local') {
+                    // Преобразуем формат даты для datetime-local
+                    const date = new Date(data[fieldName]);
+                    input.value = date.toISOString().slice(0, 16);
+                } else {
+                    input.value = data[fieldName];
+                }
+            }
+        }
+        
+        formGroup.appendChild(input);
+        formFields.appendChild(formGroup);
+    }
+}
+
+function loadSelectOptions(selectElement, modelName, selectedValue) {
+    fetch(`{% url "admin_get_options" %}?model=${modelName}`)
+        .then(response => response.json())
+        .then(options => {
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option.value;
+                optionElement.textContent = option.text;
+                if (selectedValue && selectedValue == option.value) {
+                    optionElement.selected = true;
+                }
+                selectElement.appendChild(optionElement);
+            });
+        })
+        .catch(error => {
+            console.error('Ошибка загрузки опций:', error);
+        });
+}
+
+function deleteRecord(tableName, recordId) {
+    if (!confirm('Вы уверены, что хотите удалить эту запись?')) {
+        return;
+    }
+    
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.action = '{% url "admin_crud" %}';
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'csrfmiddlewaretoken';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    const tableInput = document.createElement('input');
+    tableInput.type = 'hidden';
+    tableInput.name = 'table_name';
+    tableInput.value = tableName;
+    form.appendChild(tableInput);
+    
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'action';
+    actionInput.value = 'delete';
+    form.appendChild(actionInput);
+    
+    const idInput = document.createElement('input');
+    idInput.type = 'hidden';
+    idInput.name = 'record_id';
+    idInput.value = recordId;
+    form.appendChild(idInput);
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function closeModal() {
+    document.getElementById('recordModal').style.display = 'none';
+}
+
+// Закрытие модального окна при клике вне его
+window.onclick = function(event) {
+    const modal = document.getElementById('recordModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+</script>
+{% endblock %}
