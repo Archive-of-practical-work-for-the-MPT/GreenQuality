@@ -3,6 +3,13 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils.dateparse import parse_date
 from django.db.models import Q
+from django.http import HttpResponse
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncMonth
+from django.utils import timezone
+from datetime import timedelta
+import csv
+import json
 from .models import User, Account, Role, Payment, Ticket, Flight, Passenger, Airport, Class, BaggageType, Baggage, Airplane, AuditLog
 from .admin_views import admin_panel, admin_crud, admin_get_record, admin_get_options
 from decimal import Decimal
@@ -377,6 +384,7 @@ def profile_view(request):
 
         # Проверяем роль пользователя
         is_admin = account.role_id and account.role_id.role_name == 'ADMIN'
+        is_manager = account.role_id and account.role_id.role_name == 'MANAGER'
         
         if is_admin:
             # Статистика для администратора
@@ -464,6 +472,106 @@ def profile_view(request):
                 'recent_revenue': recent_revenue,
                 'popular_routes': popular_routes,
             }
+        elif is_manager:
+            # Статистика для менеджера
+            # Импортируем необходимые функции для статистики
+            from django.db.models import Count, Sum
+            from django.db.models.functions import TruncMonth
+            from django.utils import timezone
+            from datetime import timedelta
+            
+            # Статистика по статусам билетов для круговой диаграммы
+            ticket_statuses = Ticket.objects.values('status').annotate(
+                count=Count('id_ticket')
+            ).order_by('status')
+            
+            # Подготовка данных для круговой диаграммы
+            ticket_status_data = {
+                'labels': [],
+                'data': [],
+                'colors': []
+            }
+            status_colors = {
+                'BOOKED': '#3498db',
+                'PAID': '#2ecc71',
+                'CHECKED_IN': '#9b59b6',
+                'CANCELLED': '#e74c3c'
+            }
+            status_labels = {
+                'BOOKED': 'Забронирован',
+                'PAID': 'Оплачен',
+                'CHECKED_IN': 'Зарегистрирован',
+                'CANCELLED': 'Отменен'
+            }
+            
+            for status_info in ticket_statuses:
+                status = status_info['status']
+                ticket_status_data['labels'].append(status_labels.get(status, status))
+                ticket_status_data['data'].append(status_info['count'])
+                ticket_status_data['colors'].append(status_colors.get(status, '#95a5a6'))
+            
+            # Статистика выручки по месяцам для bar диаграммы
+            # Получаем данные за последние 12 месяцев
+            twelve_months_ago = timezone.now() - timedelta(days=365)
+            monthly_revenue = Payment.objects.filter(
+                payment_date__gte=twelve_months_ago,
+                status='COMPLETED'
+            ).annotate(
+                month=TruncMonth('payment_date')
+            ).values('month').annotate(
+                total=Sum('total_cost')
+            ).order_by('month')
+            
+            # Подготовка данных для bar диаграммы
+            revenue_data = {
+                'labels': [],
+                'data': []
+            }
+            
+            # Создаем словарь для всех месяцев
+            months_dict = {}
+            for revenue_info in monthly_revenue:
+                if revenue_info['month']:
+                    month_key = revenue_info['month'].strftime('%Y-%m')
+                    months_dict[month_key] = float(revenue_info['total'] or 0)
+            
+            # Заполняем данные за последние 12 месяцев
+            current_date = timezone.now()
+            for i in range(11, -1, -1):
+                month_date = current_date - timedelta(days=30*i)
+                month_key = month_date.strftime('%Y-%m')
+                month_label = month_date.strftime('%B %Y')
+                # Преобразуем название месяца на русский
+                month_names = {
+                    'January': 'Январь', 'February': 'Февраль', 'March': 'Март',
+                    'April': 'Апрель', 'May': 'Май', 'June': 'Июнь',
+                    'July': 'Июль', 'August': 'Август', 'September': 'Сентябрь',
+                    'October': 'Октябрь', 'November': 'Ноябрь', 'December': 'Декабрь'
+                }
+                for eng, rus in month_names.items():
+                    month_label = month_label.replace(eng, rus)
+                
+                revenue_data['labels'].append(month_label)
+                revenue_data['data'].append(months_dict.get(month_key, 0))
+            
+            # Подсчитываем общее количество билетов для боковой панели
+            total_tickets_count = Ticket.objects.count()
+            
+            context = {
+                'user': user,
+                'account': account,
+                'email': account.email,
+                'first_name': user.first_name or '',
+                'last_name': user.last_name or '',
+                'patronymic': user.patronymic or '',
+                'phone': user.phone or '',
+                'passport_number': user.passport_number or '',
+                'birthday': user.birthday.strftime('%d.%m.%Y') if user.birthday else '',
+                'is_manager': True,
+                'total_tickets': total_tickets_count,
+                'ticket_status_data': json.dumps(ticket_status_data, ensure_ascii=False),
+                'revenue_data': json.dumps(revenue_data, ensure_ascii=False),
+            }
         else:
             # История покупок для обычных пользователей
             payments = Payment.objects.filter(
@@ -507,8 +615,127 @@ def profile_view(request):
         messages.error(request, 'Аккаунт не найден')
         return redirect('login')
     except Exception as e:
+        import traceback
+        # Логируем полную ошибку для отладки
+        print(f"Ошибка в profile_view: {str(e)}")
+        print(traceback.format_exc())
         messages.error(request, f'Ошибка при загрузке профиля: {str(e)}')
         return redirect('index')
+
+
+def export_statistics(request, format_type):
+    """Экспорт статистики для менеджера в CSV или PDF"""
+    # Проверка авторизации
+    if 'account_id' not in request.session:
+        messages.error(request, 'Для доступа необходимо войти в систему')
+        return redirect('login')
+    
+    account_id = request.session['account_id']
+    
+    try:
+        account = Account.objects.get(id_account=account_id)
+        # Проверка роли менеджера
+        if not account.role_id or account.role_id.role_name != 'MANAGER':
+            messages.error(request, 'У вас нет доступа к этой функции')
+            return redirect('profile')
+        
+        # Импортируем необходимые функции для статистики
+        from django.db.models import Count, Sum
+        from django.db.models.functions import TruncMonth
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        # Получаем данные для экспорта
+        ticket_statuses = Ticket.objects.values('status').annotate(
+            count=Count('id_ticket')
+        ).order_by('status')
+        
+        twelve_months_ago = timezone.now() - timedelta(days=365)
+        monthly_revenue = Payment.objects.filter(
+            payment_date__gte=twelve_months_ago,
+            status='COMPLETED'
+        ).annotate(
+            month=TruncMonth('payment_date')
+        ).values('month').annotate(
+            total=Sum('total_cost')
+        ).order_by('month')
+        
+        status_labels = {
+            'BOOKED': 'Забронирован',
+            'PAID': 'Оплачен',
+            'CHECKED_IN': 'Зарегистрирован',
+            'CANCELLED': 'Отменен'
+        }
+        
+        if format_type == 'csv':
+            # Экспорт в CSV
+            response = HttpResponse(content_type='text/csv; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="statistics.csv"'
+            
+            # Добавляем BOM для правильного отображения кириллицы в Excel
+            response.write('\ufeff')
+            
+            writer = csv.writer(response)
+            
+            # Записываем статистику по статусам билетов
+            writer.writerow(['Статистика по статусам билетов'])
+            writer.writerow(['Статус', 'Количество'])
+            for status_info in ticket_statuses:
+                status = status_info['status']
+                label = status_labels.get(status, status)
+                writer.writerow([label, status_info['count']])
+            
+            writer.writerow([])
+            
+            # Записываем выручку по месяцам
+            writer.writerow(['Выручка по месяцам'])
+            writer.writerow(['Месяц', 'Выручка (руб.)'])
+            for revenue_info in monthly_revenue:
+                month_str = revenue_info['month'].strftime('%B %Y')
+                # Преобразуем название месяца на русский
+                month_names = {
+                    'January': 'Январь', 'February': 'Февраль', 'March': 'Март',
+                    'April': 'Апрель', 'May': 'Май', 'June': 'Июнь',
+                    'July': 'Июль', 'August': 'Август', 'September': 'Сентябрь',
+                    'October': 'Октябрь', 'November': 'Ноябрь', 'December': 'Декабрь'
+                }
+                for eng, rus in month_names.items():
+                    month_str = month_str.replace(eng, rus)
+                writer.writerow([month_str, float(revenue_info['total'] or 0)])
+            
+            return response
+        
+        elif format_type == 'pdf':
+            # Экспорт в PDF (HTML формат для печати в PDF)
+            from django.template.loader import render_to_string
+            
+            # Вычисляем общую выручку
+            total_revenue = sum(float(r['total'] or 0) for r in monthly_revenue)
+            
+            html_content = render_to_string('statistics_export.html', {
+                'ticket_statuses': ticket_statuses,
+                'monthly_revenue': monthly_revenue,
+                'status_labels': status_labels,
+                'export_date': timezone.now(),
+                'total_revenue': total_revenue,
+            })
+            
+            # Возвращаем HTML, который можно сохранить как PDF через браузер
+            response = HttpResponse(content_type='text/html; charset=utf-8')
+            response['Content-Disposition'] = 'attachment; filename="statistics.html"'
+            response.write(html_content.encode('utf-8'))
+            return response
+        
+        else:
+            messages.error(request, 'Неподдерживаемый формат экспорта')
+            return redirect('profile')
+            
+    except Account.DoesNotExist:
+        messages.error(request, 'Аккаунт не найден')
+        return redirect('login')
+    except Exception as e:
+        messages.error(request, f'Ошибка при экспорте: {str(e)}')
+        return redirect('profile')
 
 
 def buy_ticket(request, flight_id):

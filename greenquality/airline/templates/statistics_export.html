@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Статистика - Экспорт</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #0bda51;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #0bda51;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #0bda51;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .summary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Статистика GreenQuality Airlines</h1>
+    <p style="text-align: center; color: #7f8c8d;">Дата экспорта: {{ export_date|date:"d.m.Y H:i" }}</p>
+    
+    <h2>Статистика по статусам билетов</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Статус</th>
+                <th>Количество</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for status_info in ticket_statuses %}
+            <tr>
+                <td>{% if status_info.status == 'BOOKED' %}Забронирован{% elif status_info.status == 'PAID' %}Оплачен{% elif status_info.status == 'CHECKED_IN' %}Зарегистрирован{% elif status_info.status == 'CANCELLED' %}Отменен{% else %}{{ status_info.status }}{% endif %}</td>
+                <td>{{ status_info.count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <h2>Выручка по месяцам</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Месяц</th>
+                <th>Выручка (руб.)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for revenue_info in monthly_revenue %}
+            <tr>
+                <td>
+                    {% with month=revenue_info.month|date:"F" %}
+                        {% if month == "January" %}Январь
+                        {% elif month == "February" %}Февраль
+                        {% elif month == "March" %}Март
+                        {% elif month == "April" %}Апрель
+                        {% elif month == "May" %}Май
+                        {% elif month == "June" %}Июнь
+                        {% elif month == "July" %}Июль
+                        {% elif month == "August" %}Август
+                        {% elif month == "September" %}Сентябрь
+                        {% elif month == "October" %}Октябрь
+                        {% elif month == "November" %}Ноябрь
+                        {% elif month == "December" %}Декабрь
+                        {% else %}{{ month }}{% endif %}
+                    {% endwith %}
+                    {{ revenue_info.month|date:"Y" }}
+                </td>
+                <td>{{ revenue_info.total|floatformat:2 }} ₽</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="summary">
+        <strong>Общая выручка за период:</strong> {{ total_revenue|floatformat:2 }} ₽
+    </div>
+</body>
+</html>

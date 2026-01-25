@@ -53,6 +53,11 @@
                             <span class="stat-value">{{ total_airplanes }}</span>
                             <span class="stat-label">Самолетов</span>
                         </div>
+                    {% elif is_manager %}
+                        <div class="stat-item">
+                            <span class="stat-value">{{ total_tickets }}</span>
+                            <span class="stat-label">Билетов</span>
+                        </div>
                     {% else %}
                         <div class="stat-item">
                             <span class="stat-value">{{ total_tickets }}</span>
@@ -74,6 +79,15 @@
                     Личная информация
                 </button>
                 {% if is_admin %}
+                    <button class="tab-button" onclick="switchTab('statistics', event)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                        Статистика
+                    </button>
+                {% elif is_manager %}
                     <button class="tab-button" onclick="switchTab('statistics', event)">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -322,6 +336,50 @@
                                 </div>
                             </div>
                         {% endif %}
+                    </div>
+                </div>
+            {% elif is_manager %}
+                <!-- Вкладка: Статистика (для менеджера) -->
+                <div id="tab-statistics" class="tab-content" style="display: none;">
+                    <div class="content-card">
+                        <div class="statistics-header">
+                            <h3 class="content-title">Статистика</h3>
+                            <div class="export-buttons">
+                                <a href="{% url 'export_statistics' 'csv' %}" class="export-btn export-csv">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Экспорт CSV
+                                </a>
+                                <a href="{% url 'export_statistics' 'pdf' %}" class="export-btn export-pdf">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                    Экспорт PDF
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Круговая диаграмма статусов билетов -->
+                        <div class="statistics-section">
+                            <h4 class="section-title">Статусы билетов</h4>
+                            <div class="chart-container">
+                                <canvas id="ticketStatusChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Bar диаграмма выручки по месяцам -->
+                        <div class="statistics-section">
+                            <h4 class="section-title">Выручка по месяцам</h4>
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
                     </div>
                 </div>
             {% else %}
@@ -903,6 +961,69 @@
     margin-bottom: 40px;
 }
 
+.statistics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e1e8ed;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid;
+}
+
+.export-csv {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.export-csv:hover {
+    background: #2980b9;
+    border-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.export-pdf {
+    background: #e74c3c;
+    color: white;
+    border-color: #e74c3c;
+}
+
+.export-pdf:hover {
+    background: #c0392b;
+    border-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    margin-top: 20px;
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
 .section-title {
     font-size: 20px;
     font-weight: 700;
@@ -1083,5 +1204,115 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+{% if is_manager %}
+// Инициализация диаграмм для менеджера
+document.addEventListener('DOMContentLoaded', function() {
+    // Данные для круговой диаграммы статусов билетов
+    const ticketStatusData = {{ ticket_status_data|safe }};
+    const revenueData = {{ revenue_data|safe }};
+    
+    // Круговая диаграмма статусов билетов
+    const ticketStatusCtx = document.getElementById('ticketStatusChart');
+    if (ticketStatusCtx) {
+        new Chart(ticketStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ticketStatusData.labels,
+                datasets: [{
+                    data: ticketStatusData.data,
+                    backgroundColor: ticketStatusData.colors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Bar диаграмма выручки по месяцам
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: revenueData.labels,
+                datasets: [{
+                    label: 'Выручка (руб.)',
+                    data: revenueData.data,
+                    backgroundColor: 'rgba(11, 218, 81, 0.8)',
+                    borderColor: 'rgba(11, 218, 81, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Выручка: ' + context.parsed.y.toLocaleString('ru-RU') + ' ₽';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('ru-RU') + ' ₽';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+{% endif %}
 </script>
+
+{% if is_manager %}
+<!-- Chart.js библиотека -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endif %}
 {% endblock %}
