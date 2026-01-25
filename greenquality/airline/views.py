@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
+from django.utils.dateparse import parse_date
 from .models import User, Account, Role
 
 
@@ -134,3 +135,137 @@ def register_view(request):
             return render(request, 'register.html', context)
 
     return render(request, 'register.html', context)
+
+
+def logout_view(request):
+    """Выход из аккаунта"""
+    if 'account_id' in request.session:
+        del request.session['account_id']
+        del request.session['user_email']
+        messages.success(request, 'Вы успешно вышли из системы')
+    return redirect('index')
+
+
+def profile_view(request):
+    """Просмотр и редактирование профиля пользователя"""
+    # Проверяем, авторизован ли пользователь
+    if 'account_id' not in request.session:
+        messages.error(request, 'Для доступа к профилю необходимо войти в систему')
+        return redirect('login')
+    
+    account_id = request.session['account_id']
+    
+    try:
+        account = Account.objects.get(id_account=account_id)
+        try:
+            user = User.objects.get(account_id=account)
+        except User.DoesNotExist:
+            # Если пользователь не существует, создаем его с базовыми данными
+            user = User.objects.create(
+                account_id=account,
+                first_name='',
+                last_name='',
+                patronymic=None,
+                phone=None,
+                passport_number=None,
+                birthday=None
+            )
+        
+        if request.method == 'POST':
+            # Получаем данные из формы
+            first_name = request.POST.get('first_name', '').strip()
+            last_name = request.POST.get('last_name', '').strip()
+            patronymic = request.POST.get('patronymic', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            passport_number = request.POST.get('passport_number', '').strip()
+            birthday = request.POST.get('birthday', '').strip()
+            email = request.POST.get('email', '').strip()
+            
+            # Обновляем данные пользователя
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            user.patronymic = patronymic if patronymic else None
+            user.phone = phone if phone else None
+            user.passport_number = passport_number if passport_number else None
+            # Обрабатываем дату рождения (формат дд.мм.гггг)
+            if birthday:
+                try:
+                    # Пробуем распарсить дату в формате дд.мм.гггг
+                    if '.' in birthday:
+                        day, month, year = birthday.split('.')
+                        birthday = f"{year}-{month}-{day}"
+                    user.birthday = parse_date(birthday)
+                except (ValueError, TypeError):
+                    user.birthday = None
+            else:
+                user.birthday = None
+            
+            # Сохраняем пользователя с обработкой ошибок
+            try:
+                user.save()
+            except Exception as e:
+                messages.error(request, f'Ошибка при сохранении данных: {str(e)}')
+                # Возвращаем форму с сохраненными данными при ошибке
+                context = {
+                    'user': user,
+                    'account': account,
+                    'email': email if email else account.email,
+                    'first_name': first_name if first_name else (user.first_name or ''),
+                    'last_name': last_name if last_name else (user.last_name or ''),
+                    'patronymic': patronymic if patronymic else (user.patronymic or ''),
+                    'phone': phone if phone else (user.phone or ''),
+                    'passport_number': passport_number if passport_number else (user.passport_number or ''),
+                    'birthday': birthday if birthday else (user.birthday.strftime('%d.%m.%Y') if user.birthday else ''),
+                }
+                return render(request, 'profile.html', context)
+            
+            # Обновляем email в аккаунте, если он изменился
+            if email and email != account.email:
+                # Проверяем, не занят ли новый email
+                if Account.objects.filter(email=email).exclude(id_account=account_id).exists():
+                    messages.error(request, 'Пользователь с таким email уже существует')
+                    # Возвращаем форму с сохраненными данными при ошибке
+                    context = {
+                        'user': user,
+                        'account': account,
+                        'email': email,
+                        'first_name': first_name if first_name else (user.first_name or ''),
+                        'last_name': last_name if last_name else (user.last_name or ''),
+                        'patronymic': patronymic if patronymic else (user.patronymic or ''),
+                        'phone': phone if phone else (user.phone or ''),
+                        'passport_number': passport_number if passport_number else (user.passport_number or ''),
+                        'birthday': birthday if birthday else (user.birthday.strftime('%d.%m.%Y') if user.birthday else ''),
+                    }
+                    return render(request, 'profile.html', context)
+                else:
+                    account.email = email
+                    account.save()
+                    request.session['user_email'] = email
+                    messages.success(request, 'Email успешно обновлен')
+            
+            messages.success(request, 'Профиль успешно обновлен')
+            return redirect('profile')
+        
+        # Подготавливаем контекст для отображения
+        context = {
+            'user': user,
+            'account': account,
+            'email': account.email,
+            'first_name': user.first_name or '',
+            'last_name': user.last_name or '',
+            'patronymic': user.patronymic or '',
+            'phone': user.phone or '',
+            'passport_number': user.passport_number or '',
+            'birthday': user.birthday.strftime('%d.%m.%Y') if user.birthday else '',
+        }
+        
+        return render(request, 'profile.html', context)
+        
+    except Account.DoesNotExist:
+        messages.error(request, 'Аккаунт не найден')
+        return redirect('login')
+    except Exception as e:
+        messages.error(request, f'Ошибка при загрузке профиля: {str(e)}')
+        return redirect('index')

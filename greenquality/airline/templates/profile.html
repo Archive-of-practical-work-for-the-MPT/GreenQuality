@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block title %}Регистрация | GreenQuality Airlines{% endblock %}
+{% block title %}Профиль | GreenQuality Airlines{% endblock %}
 
 {% block content %}
 <div class="auth-container">
     <div class="auth-modal">
         <div class="auth-header">
-            <h2>Создание аккаунта</h2>
-            <p>Заполните форму для регистрации</p>
+            <h2>Мой профиль</h2>
+            <p>Редактируйте информацию о себе</p>
         </div>
         
         <!-- Отображение сообщений об ошибках и успехе -->
@@ -51,35 +51,31 @@
                        oninput="this.setCustomValidity('')">
             </div>
             
-            <div class="form-group password-group">
-                <label for="password">Пароль</label>
-                <div class="password-wrapper">
-                    <input type="password" id="password" name="password" required 
-                           oninvalid="this.setCustomValidity('Пожалуйста, введите пароль')" 
-                           oninput="this.setCustomValidity('')">
-                    <span class="password-toggle" onclick="togglePasswords()">
-                        <svg class="eye-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                            <circle cx="12" cy="12" r="3"></circle>
-                        </svg>
-                    </span>
-                </div>
+            <div class="form-group">
+                <label for="phone">Телефон (необязательно)</label>
+                <input type="tel" id="phone" name="phone" value="{{ phone|default:'' }}" 
+                       placeholder="+79991234567" maxlength="20">
             </div>
             
-            <div class="form-group password-group">
-                <label for="password_confirm">Подтверждение пароля</label>
-                <div class="password-wrapper">
-                    <input type="password" id="password_confirm" name="password_confirm" required 
-                           oninvalid="this.setCustomValidity('Пожалуйста, подтвердите пароль')" 
-                           oninput="this.setCustomValidity('')">
-                </div>
+            <div class="form-group">
+                <label for="passport_number">Номер паспорта (необязательно)</label>
+                <input type="text" id="passport_number" name="passport_number" value="{{ passport_number|default:'' }}" 
+                       placeholder="1234 567890">
             </div>
             
-            <button type="submit" class="auth-btn">Зарегистрироваться</button>
+            <div class="form-group">
+                <label for="birthday">Дата рождения (необязательно)</label>
+                <input type="text" id="birthday" name="birthday" value="{{ birthday|default:'' }}" 
+                       placeholder="дд.мм.гггг" pattern="\d{2}\.\d{2}\.\d{4}" 
+                       oninvalid="this.setCustomValidity('Введите дату в формате дд.мм.гггг')" 
+                       oninput="this.setCustomValidity('')">
+            </div>
+            
+            <button type="submit" class="auth-btn">Сохранить изменения</button>
         </form>
         
         <div class="auth-footer">
-            <p>Уже есть аккаунт? <a href="{% url 'login' %}">Войдите</a></p>
+            <p><a href="{% url 'index' %}">Вернуться на главную</a></p>
         </div>
     </div>
 </div>
@@ -102,7 +98,7 @@
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
     padding: 40px;
     width: 100%;
-    max-width: 500px;
+    max-width: 600px;
     transform: translateY(0);
     transition: transform 0.3s ease;
 }
@@ -162,38 +158,6 @@
     border-color: #00c853;
     outline: none;
     box-shadow: 0 0 0 3px rgba(0, 200, 83, 0.2);
-}
-
-.password-group {
-    position: relative;
-}
-
-.password-wrapper {
-    position: relative;
-}
-
-.password-wrapper input {
-    padding-right: 45px;
-}
-
-.password-toggle {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: #7f8c8d;
-    display: flex;
-    align-items: center;
-    transition: color 0.3s ease;
-}
-
-.password-toggle:hover {
-    color: #00c853;
-}
-
-.eye-icon {
-    pointer-events: none;
 }
 
 .auth-btn {
@@ -286,23 +250,46 @@
 
 {% block extra_js %}
 <script>
-function togglePasswords() {
-    const passwordInput = document.getElementById('password');
-    const passwordConfirmInput = document.getElementById('password_confirm');
-    const toggle = document.querySelector('.password-toggle');
-    const icon = toggle.querySelector('.eye-icon');
+// Функция для форматирования даты из формата дд.мм.гггг в формат для отображения
+document.addEventListener('DOMContentLoaded', function() {
+    const birthdayInput = document.getElementById('birthday');
     
-    if (passwordInput.type === 'password') {
-        passwordInput.type = 'text';
-        passwordConfirmInput.type = 'text';
-        // Иконка закрытого глаза (перечеркнутый)
-        icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
-    } else {
-        passwordInput.type = 'password';
-        passwordConfirmInput.type = 'password';
-        // Иконка открытого глаза
-        icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+    // Маска для ввода даты в формате дд.мм.гггг
+    if (birthdayInput) {
+        birthdayInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Удаляем все нецифровые символы
+            
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '.' + value.substring(2);
+            }
+            if (value.length >= 5) {
+                value = value.substring(0, 5) + '.' + value.substring(5, 9);
+            }
+            
+            e.target.value = value;
+        });
+        
+        // Валидация даты
+        birthdayInput.addEventListener('blur', function(e) {
+            const value = e.target.value;
+            if (value && value.length === 10) {
+                const parts = value.split('.');
+                if (parts.length === 3) {
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10);
+                    const year = parseInt(parts[2], 10);
+                    
+                    // Проверка корректности даты
+                    const date = new Date(year, month - 1, day);
+                    if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
+                        e.target.setCustomValidity('Введите корректную дату');
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                }
+            }
+        });
     }
-}
+});
 </script>
 {% endblock %}
