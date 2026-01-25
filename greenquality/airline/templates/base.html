@@ -25,6 +25,9 @@
                     <li><a href="{% url 'contacts' %}">Контакты</a></li>
                     {% if request.session.account_id %}
                         <li><a href="{% url 'profile' %}">Профиль</a></li>
+                        {% if is_admin %}
+                            <li><a href="{% url 'admin_panel' %}">Панель</a></li>
+                        {% endif %}
                         <li><a href="{% url 'logout' %}">Выход</a></li>
                     {% else %}
                         <li><a href="{% url 'login' %}">Вход</a></li>

@@ -3,7 +3,8 @@ from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils.dateparse import parse_date
 from django.db.models import Q
-from .models import User, Account, Role, Payment, Ticket, Flight, Passenger, Airport, Class, BaggageType, Baggage, Airplane
+from .models import User, Account, Role, Payment, Ticket, Flight, Passenger, Airport, Class, BaggageType, Baggage, Airplane, AuditLog
+from .admin_views import admin_panel, admin_crud, admin_get_record, admin_get_options
 from decimal import Decimal
 
 
@@ -153,6 +154,11 @@ def login_view(request):
                 # Сохраняем ID аккаунта в сессии для отслеживания входа пользователя
                 request.session['account_id'] = account.id_account
                 request.session['user_email'] = account.email
+                # Проверяем, является ли пользователь администратором
+                if account.role_id and account.role_id.role_name == 'ADMIN':
+                    request.session['is_admin'] = True
+                else:
+                    request.session['is_admin'] = False
                 messages.success(request, 'Вы успешно вошли в систему!')
                 return redirect('index')
             else:
@@ -258,6 +264,8 @@ def logout_view(request):
     if 'account_id' in request.session:
         del request.session['account_id']
         del request.session['user_email']
+        if 'is_admin' in request.session:
+            del request.session['is_admin']
         messages.success(request, 'Вы успешно вышли из системы')
     return redirect('index')
 
@@ -834,3 +842,6 @@ def buy_ticket_confirm(request, flight_id):
     except Exception as e:
         messages.error(request, f'Ошибка: {str(e)}')
         return redirect('flights')
+
+
+# Admin panel functions
