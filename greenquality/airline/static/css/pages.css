@@ -652,6 +652,26 @@
     color: #e74c3c;
 }
 
+.buy-btn {
+    background: linear-gradient(45deg, #0bda51, #08a53d);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: inline-block;
+}
+
+.buy-btn:hover {
+    background: linear-gradient(45deg, #08a53d, #007a1f);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(11, 218, 81, 0.3);
+}
+
 .details-btn {
     background: #0bda51;
     color: white;

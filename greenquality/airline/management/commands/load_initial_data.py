@@ -6,8 +6,9 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
 from airline.models import (
-    Airport, Airplane, Flight, Role, Class, Account, User
+    Airport, Airplane, Flight, Role, Class, Account, User, BaggageType
 )
+from decimal import Decimal
 
 
 class Command(BaseCommand):
@@ -27,6 +28,9 @@ class Command(BaseCommand):
         
         # Создаем самолеты
         self.create_airplanes()
+        
+        # Создаем типы багажа
+        self.create_baggage_types()
         
         # Создаем рейсы
         self.create_flights()
@@ -88,6 +92,49 @@ class Command(BaseCommand):
                 self.stdout.write(f'  ✓ Создан аэропорт: {airport.name} ({airport.id_airport})')
             else:
                 self.stdout.write(f'  - Аэропорт уже существует: {airport.name}')
+
+    def create_baggage_types(self):
+        """Создание типов багажа"""
+        baggage_types_data = [
+            {
+                'type_name': 'STANDARD',
+                'max_weight_kg': Decimal('23.00'),
+                'description': 'Стандартный багаж до 23 кг',
+                'base_price': Decimal('2000.00')
+            },
+            {
+                'type_name': 'EXTRA',
+                'max_weight_kg': Decimal('32.00'),
+                'description': 'Дополнительный багаж до 32 кг',
+                'base_price': Decimal('3500.00')
+            },
+            {
+                'type_name': 'SPORT',
+                'max_weight_kg': Decimal('30.00'),
+                'description': 'Спортивный инвентарь до 30 кг',
+                'base_price': Decimal('5000.00')
+            },
+            {
+                'type_name': 'OVERSIZE',
+                'max_weight_kg': Decimal('50.00'),
+                'description': 'Крупногабаритный багаж до 50 кг',
+                'base_price': Decimal('8000.00')
+            },
+        ]
+        
+        for baggage_data in baggage_types_data:
+            baggage_type, created = BaggageType.objects.get_or_create(
+                type_name=baggage_data['type_name'],
+                defaults={
+                    'max_weight_kg': baggage_data['max_weight_kg'],
+                    'description': baggage_data['description'],
+                    'base_price': baggage_data['base_price']
+                }
+            )
+            if created:
+                self.stdout.write(f'  ✓ Создан тип багажа: {baggage_type.get_type_name_display()}')
+            else:
+                self.stdout.write(f'  - Тип багажа уже существует: {baggage_type.get_type_name_display()}')
 
     def create_airplanes(self):
         """Создание самолетов"""

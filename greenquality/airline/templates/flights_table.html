@@ -22,9 +22,20 @@
             </td>
             <td>{{ item.departure_airport.id_airport|first }}</td>
             <td>
-                <button class="details-btn" onclick="showFlightDetails({{ item.flight.id_flight }})">
-                    Подробнее
-                </button>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button class="details-btn" onclick="showFlightDetails({{ item.flight.id_flight }})">
+                        Подробнее
+                    </button>
+                    {% if request.session.account_id %}
+                        <a href="{% url 'buy_ticket' item.flight.id_flight %}" class="buy-btn">
+                            Купить
+                        </a>
+                    {% else %}
+                        <a href="{% url 'login' %}" class="buy-btn" title="Для покупки необходимо войти">
+                            Купить
+                        </a>
+                    {% endif %}
+                </div>
             </td>
         </tr>
     {% endfor %}
