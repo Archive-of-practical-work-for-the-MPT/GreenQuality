@@ -73,10 +73,15 @@ WSGI_APPLICATION = 'greenquality.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Настройки подключения к локальной базе данных PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'greenquality',  # Название базы данных
+        'USER': 'postgres',  # Имя пользователя (обычно postgres по умолчанию)
+        'PASSWORD': '1234',  # Пароль от базы данных
+        'HOST': 'localhost',  # Хост базы данных
+        'PORT': '5432',  # Порт PostgreSQL (по умолчанию 5432)
     }
 }
 

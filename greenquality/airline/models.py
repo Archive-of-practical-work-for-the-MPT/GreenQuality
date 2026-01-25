@@ -160,9 +160,9 @@ class User(models.Model):
     first_name = models.CharField(max_length=50)
     patronymic = models.CharField(max_length=50, blank=True, null=True)
     last_name = models.CharField(max_length=50)
-    phone = models.CharField(max_length=14)
-    passport_number = models.CharField(max_length=20, unique=True)
-    birthday = models.DateField()
+    phone = models.CharField(max_length=14, blank=True, null=True)
+    passport_number = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    birthday = models.DateField(blank=True, null=True)
 
     class Meta:
         db_table = 'users'
