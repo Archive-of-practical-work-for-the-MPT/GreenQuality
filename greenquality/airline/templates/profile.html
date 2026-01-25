@@ -1,0 +1,772 @@
+{% extends 'base.html' %}
+
+{% block title %}Профиль | GreenQuality Airlines{% endblock %}
+
+{% block content %}
+<div class="profile-container">
+    <!-- Отображение сообщений об ошибках и успехе -->
+    {% if messages %}
+        <div class="messages-container">
+            {% for message in messages %}
+                <div class="message message-{{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="profile-wrapper">
+        <!-- Боковая панель с информацией о пользователе -->
+        <aside class="profile-sidebar">
+            <div class="profile-card">
+                <div class="profile-avatar">
+                    <div class="avatar-circle">
+                        <span class="avatar-initials">
+                            {% if first_name and last_name %}
+                                {{ first_name|first }}{{ last_name|first }}
+                            {% else %}
+                                {{ email|first|upper }}
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="profile-info">
+                    <h2 class="profile-name">
+                        {% if first_name and last_name %}
+                            {{ first_name }} {{ last_name }}
+                        {% else %}
+                            Пользователь
+                        {% endif %}
+                    </h2>
+                    <p class="profile-email">{{ email }}</p>
+                    {% if phone %}
+                        <p class="profile-phone">{{ phone }}</p>
+                    {% endif %}
+                </div>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">{{ total_tickets }}</span>
+                        <span class="stat-label">Билетов</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Основной контент с вкладками -->
+        <main class="profile-main">
+            <div class="profile-tabs">
+                <button class="tab-button active" onclick="switchTab('info')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                    Личная информация
+                </button>
+                <button class="tab-button" onclick="switchTab('tickets')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    История покупок
+                </button>
+            </div>
+
+            <!-- Вкладка: Личная информация -->
+            <div id="tab-info" class="tab-content active">
+                <div class="content-card">
+                    <h3 class="content-title">Редактирование профиля</h3>
+                    <form class="profile-form" method="post" novalidate>
+                        {% csrf_token %}
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="first_name">Имя</label>
+                                <input type="text" id="first_name" name="first_name" value="{{ first_name|default:'' }}" required 
+                                       oninvalid="this.setCustomValidity('Пожалуйста, заполните поле Имя')" 
+                                       oninput="this.setCustomValidity('')">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="last_name">Фамилия</label>
+                                <input type="text" id="last_name" name="last_name" value="{{ last_name|default:'' }}" required 
+                                       oninvalid="this.setCustomValidity('Пожалуйста, заполните поле Фамилия')" 
+                                       oninput="this.setCustomValidity('')">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="patronymic">Отчество (необязательно)</label>
+                            <input type="text" id="patronymic" name="patronymic" value="{{ patronymic|default:'' }}">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" value="{{ email|default:'' }}" required 
+                                   oninvalid="this.setCustomValidity('Пожалуйста, введите корректный email адрес')" 
+                                   oninput="this.setCustomValidity('')">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="phone">Телефон (необязательно)</label>
+                            <input type="tel" id="phone" name="phone" value="{{ phone|default:'' }}" 
+                                   placeholder="+79991234567" maxlength="20">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="passport_number">Номер паспорта (необязательно)</label>
+                            <input type="text" id="passport_number" name="passport_number" value="{{ passport_number|default:'' }}" 
+                                   placeholder="1234 567890">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="birthday">Дата рождения (необязательно)</label>
+                            <input type="text" id="birthday" name="birthday" value="{{ birthday|default:'' }}" 
+                                   placeholder="дд.мм.гггг" pattern="\d{2}\.\d{2}\.\d{4}" 
+                                   oninvalid="this.setCustomValidity('Введите дату в формате дд.мм.гггг')" 
+                                   oninput="this.setCustomValidity('')">
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">Сохранить изменения</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Вкладка: История покупок -->
+            <div id="tab-tickets" class="tab-content">
+                <div class="content-card">
+                    <h3 class="content-title">История покупок билетов</h3>
+                    
+                    {% if tickets %}
+                        <div class="tickets-list">
+                            {% for item in tickets %}
+                                <div class="ticket-card">
+                                    <div class="ticket-header">
+                                        <div class="ticket-route">
+                                            <div class="route-point">
+                                                <span class="airport-code">{{ item.flight.departure_airport_id.id_airport }}</span>
+                                                <span class="airport-name">{{ item.flight.departure_airport_id.city }}</span>
+                                            </div>
+                                            <div class="route-arrow">
+                                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                                </svg>
+                                            </div>
+                                            <div class="route-point">
+                                                <span class="airport-code">{{ item.flight.arrival_airport_id.id_airport }}</span>
+                                                <span class="airport-name">{{ item.flight.arrival_airport_id.city }}</span>
+                                            </div>
+                                        </div>
+                                        <div class="ticket-status status-{{ item.ticket.status|lower }}">
+                                            {{ item.ticket.get_status_display }}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="ticket-body">
+                                        <div class="ticket-info-row">
+                                            <div class="info-item">
+                                                <span class="info-label">Дата вылета</span>
+                                                <span class="info-value">{{ item.flight.departure_time|date:"d.m.Y H:i" }}</span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="info-label">Дата прилета</span>
+                                                <span class="info-value">{{ item.flight.arrival_time|date:"d.m.Y H:i" }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="ticket-info-row">
+                                            <div class="info-item">
+                                                <span class="info-label">Класс</span>
+                                                <span class="info-value">{{ item.class_name }}</span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="info-label">Место</span>
+                                                <span class="info-value">{{ item.ticket.seat_number }}</span>
+                                            </div>
+                                            <div class="info-item">
+                                                <span class="info-label">Пассажир</span>
+                                                <span class="info-value">{{ item.passenger.first_name }} {{ item.passenger.last_name }}</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="ticket-footer">
+                                            <div class="ticket-price">
+                                                <span class="price-label">Стоимость</span>
+                                                <span class="price-value">{{ item.ticket.price }} ₽</span>
+                                            </div>
+                                            <div class="ticket-payment-info">
+                                                <span class="payment-date">Оплачено: {{ item.payment.payment_date|date:"d.m.Y H:i" }}</span>
+                                                <span class="payment-method">{{ item.payment.get_payment_method_display }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="empty-state">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M9 12l2 2 4-4"></path>
+                                <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
+                                <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
+                                <path d="M13 12h3a2 2 0 0 1 2 2v1"></path>
+                                <path d="M5 12H2a2 2 0 0 0-2 2v1"></path>
+                            </svg>
+                            <h3>У вас пока нет покупок</h3>
+                            <p>После покупки билетов они появятся здесь</p>
+                            <a href="{% url 'flights' %}" class="empty-state-btn">Посмотреть рейсы</a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.profile-container {
+    min-height: calc(100vh - 200px);
+    padding: 40px 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+}
+
+.messages-container {
+    max-width: 1400px;
+    margin: 0 auto 30px;
+}
+
+.message {
+    padding: 12px 20px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.message-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.profile-wrapper {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 30px;
+}
+
+.profile-sidebar {
+    position: sticky;
+    top: 20px;
+    height: fit-content;
+}
+
+.profile-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.profile-avatar {
+    margin-bottom: 20px;
+}
+
+.avatar-circle {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0bda51 0%, #08a53d 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    box-shadow: 0 5px 15px rgba(11, 218, 81, 0.3);
+}
+
+.avatar-initials {
+    color: white;
+    font-size: 36px;
+    font-weight: 700;
+}
+
+.profile-name {
+    color: #2c3e50;
+    font-size: 24px;
+    margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.profile-email {
+    color: #7f8c8d;
+    font-size: 14px;
+    margin-bottom: 5px;
+}
+
+.profile-phone {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.profile-stats {
+    margin-top: 25px;
+    padding-top: 25px;
+    border-top: 1px solid #e1e8ed;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #0bda51;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.profile-main {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.profile-tabs {
+    display: flex;
+    border-bottom: 2px solid #e1e8ed;
+    background: #f8f9fa;
+}
+
+.tab-button {
+    flex: 1;
+    padding: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    color: #7f8c8d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tab-button:hover {
+    color: #0bda51;
+    background: rgba(11, 218, 81, 0.05);
+}
+
+.tab-button.active {
+    color: #0bda51;
+    background: white;
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #0bda51;
+}
+
+.tab-content {
+    display: none;
+    padding: 40px;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.content-card {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.content-title {
+    color: #2c3e50;
+    font-size: 28px;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.form-group label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.form-group input {
+    padding: 15px;
+    border: 2px solid #e1e8ed;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+    border-color: #0bda51;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(11, 218, 81, 0.2);
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #0bda51, #08a53d);
+    color: white;
+    border: none;
+    padding: 15px 40px;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(11, 218, 81, 0.3);
+    align-self: flex-start;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(11, 218, 81, 0.4);
+}
+
+/* Стили для билетов */
+.tickets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.ticket-card {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 25px;
+    border: 2px solid #e1e8ed;
+    transition: all 0.3s ease;
+}
+
+.ticket-card:hover {
+    border-color: #0bda51;
+    box-shadow: 0 5px 15px rgba(11, 218, 81, 0.2);
+    transform: translateY(-2px);
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e1e8ed;
+}
+
+.ticket-route {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.route-point {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.airport-code {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0bda51;
+    margin-bottom: 5px;
+}
+
+.airport-name {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.route-arrow {
+    color: #0bda51;
+}
+
+.ticket-status {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.status-booked {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.status-paid {
+    background: #e8f5e9;
+    color: #388e3c;
+}
+
+.status-checked_in {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.status-cancelled {
+    background: #ffebee;
+    color: #d32f2f;
+}
+
+.ticket-body {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.ticket-info-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.info-value {
+    font-size: 16px;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.ticket-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e1e8ed;
+}
+
+.ticket-price {
+    display: flex;
+    flex-direction: column;
+}
+
+.price-label {
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 5px;
+}
+
+.price-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #0bda51;
+}
+
+.ticket-payment-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+}
+
+.payment-date {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.payment-method {
+    font-size: 14px;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #7f8c8d;
+}
+
+.empty-state svg {
+    margin-bottom: 20px;
+    color: #bdc3c7;
+}
+
+.empty-state h3 {
+    color: #2c3e50;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.empty-state p {
+    margin-bottom: 30px;
+    font-size: 16px;
+}
+
+.empty-state-btn {
+    display: inline-block;
+    background: linear-gradient(135deg, #0bda51, #08a53d);
+    color: white;
+    padding: 12px 30px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.empty-state-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(11, 218, 81, 0.3);
+}
+
+@media (max-width: 1024px) {
+    .profile-wrapper {
+        grid-template-columns: 1fr;
+    }
+    
+    .profile-sidebar {
+        position: static;
+    }
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .ticket-info-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .ticket-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .ticket-payment-info {
+        align-items: flex-start;
+    }
+    
+    .tab-content {
+        padding: 20px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function switchTab(tabName) {
+    // Скрываем все вкладки
+    document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+    });
+    
+    // Убираем активный класс со всех кнопок
+    document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Показываем выбранную вкладку
+    document.getElementById('tab-' + tabName).classList.add('active');
+    
+    // Добавляем активный класс к выбранной кнопке
+    event.target.closest('.tab-button').classList.add('active');
+}
+
+// Функция для форматирования даты из формата дд.мм.гггг в формат для отображения
+document.addEventListener('DOMContentLoaded', function() {
+    const birthdayInput = document.getElementById('birthday');
+    
+    // Маска для ввода даты в формате дд.мм.гггг
+    if (birthdayInput) {
+        birthdayInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, ''); // Удаляем все нецифровые символы
+            
+            if (value.length >= 2) {
+                value = value.substring(0, 2) + '.' + value.substring(2);
+            }
+            if (value.length >= 5) {
+                value = value.substring(0, 5) + '.' + value.substring(5, 9);
+            }
+            
+            e.target.value = value;
+        });
+        
+        // Валидация даты
+        birthdayInput.addEventListener('blur', function(e) {
+            const value = e.target.value;
+            if (value && value.length === 10) {
+                const parts = value.split('.');
+                if (parts.length === 3) {
+                    const day = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10);
+                    const year = parseInt(parts[2], 10);
+                    
+                    // Проверка корректности даты
+                    const date = new Date(year, month - 1, day);
+                    if (date.getDate() !== day || date.getMonth() !== month - 1 || date.getFullYear() !== year) {
+                        e.target.setCustomValidity('Введите корректную дату');
+                    } else {
+                        e.target.setCustomValidity('');
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

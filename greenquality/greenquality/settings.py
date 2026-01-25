@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',  # Django REST Framework для создания API
     'airline',
 ]
 
@@ -73,10 +74,15 @@ WSGI_APPLICATION = 'greenquality.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# Настройки подключения к локальной базе данных PostgreSQL
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'greenquality',  # Название базы данных
+        'USER': 'postgres',  # Имя пользователя (обычно postgres по умолчанию)
+        'PASSWORD': '1234',  # Пароль от базы данных
+        'HOST': 'localhost',  # Хост базы данных
+        'PORT': '5432',  # Порт PostgreSQL (по умолчанию 5432)
     }
 }
 
@@ -125,3 +131,25 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Настройки Django REST Framework
+REST_FRAMEWORK = {
+    # Используем JSON по умолчанию для API
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',  # Для удобного просмотра API в браузере
+    ],
+    # Парсеры для обработки входящих данных
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+    # Пагинация (разбиение на страницы)
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    # Разрешения по умолчанию (можно настроить аутентификацию позже)
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Позволяет всем доступ (для разработки)
+    ],
+}

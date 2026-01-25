@@ -1,0 +1,426 @@
+{% extends 'base.html' %}
+
+{% block title %}Выбор места - GreenQuality Airlines{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="page-header">
+        <h1 class="page-title">Покупка билета</h1>
+        <p class="page-subtitle">Шаг 2: Выбор места</p>
+    </section>
+
+    <!-- Информация о рейсе -->
+    <section class="flight-info-card">
+        <div class="flight-info-header">
+            <h2>Информация о рейсе</h2>
+        </div>
+        <div class="flight-info-details">
+            <div class="flight-route">
+                <div class="route-point">
+                    <span class="airport-code">{{ flight.departure_airport_id.id_airport }}</span>
+                    <span class="city-name">{{ flight.departure_airport_id.city }}</span>
+                    <span class="time">{{ flight.departure_time|date:"H:i" }}</span>
+                </div>
+                <div class="route-arrow">→</div>
+                <div class="route-point">
+                    <span class="airport-code">{{ flight.arrival_airport_id.id_airport }}</span>
+                    <span class="city-name">{{ flight.arrival_airport_id.city }}</span>
+                    <span class="time">{{ flight.arrival_time|date:"H:i" }}</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Легенда -->
+    <section class="seat-legend">
+        <div class="legend-item">
+            <div class="seat-example available"></div>
+            <span>Свободно</span>
+        </div>
+        <div class="legend-item">
+            <div class="seat-example booked"></div>
+            <span>Занято</span>
+        </div>
+        <div class="legend-item">
+            <div class="seat-example selected"></div>
+            <span>Выбрано</span>
+        </div>
+    </section>
+
+    <!-- Карта мест -->
+    <section class="seat-map-section">
+        <form method="post" id="seatForm" class="seat-selection-form">
+            {% csrf_token %}
+            <input type="hidden" name="seat_number" id="selectedSeat" required>
+            
+            <div class="airplane-container">
+                <!-- Схема салона -->
+                <div class="cabin-layout">
+                    <!-- Левая сторона -->
+                    <div class="seats-left">
+                        <!-- Заголовок с буквами мест -->
+                        <div class="seat-row header-row">
+                            <div class="row-number"></div>
+                            {% for letter in left_seat_letters %}
+                                <div class="seat-letter">{{ letter }}</div>
+                            {% endfor %}
+                        </div>
+                        {% for row_data in seats_map %}
+                            <div class="seat-row">
+                                <div class="row-number">{{ row_data.row }}</div>
+                                {% for seat in row_data.left_seats %}
+                                    <button type="button" 
+                                            class="seat-btn {% if seat.booked %}booked{% else %}available{% endif %}" 
+                                            data-seat="{{ seat.number }}"
+                                            {% if seat.booked %}disabled title="Место занято"{% else %}title="Место {{ seat.number }}"{% endif %}>
+                                    </button>
+                                {% endfor %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Проход -->
+                    <div class="aisle-center"></div>
+                    
+                    <!-- Правая сторона -->
+                    <div class="seats-right">
+                        <!-- Заголовок с буквами мест -->
+                        <div class="seat-row header-row">
+                            {% for letter in right_seat_letters %}
+                                <div class="seat-letter">{{ letter }}</div>
+                            {% endfor %}
+                            <div class="row-number"></div>
+                        </div>
+                        {% for row_data in seats_map %}
+                            <div class="seat-row">
+                                {% for seat in row_data.right_seats %}
+                                    <button type="button" 
+                                            class="seat-btn {% if seat.booked %}booked{% else %}available{% endif %}" 
+                                            data-seat="{{ seat.number }}"
+                                            {% if seat.booked %}disabled title="Место занято"{% else %}title="Место {{ seat.number }}"{% endif %}>
+                                    </button>
+                                {% endfor %}
+                                <div class="row-number">{{ row_data.row }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="selected-seat-info" id="selectedSeatInfo" style="display: none;">
+                <p>Выбрано место: <strong id="selectedSeatNumber"></strong></p>
+            </div>
+            
+            <div class="form-actions">
+                <a href="{% url 'buy_ticket' flight.id_flight %}" class="back-btn">← Назад</a>
+                <button type="submit" class="continue-btn" id="submitBtn" disabled>Продолжить →</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<style>
+.flight-info-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    margin: 30px 0;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.flight-info-header h2 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 24px;
+}
+
+.flight-route {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 15px;
+}
+
+.route-point {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.airport-code {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0bda51;
+}
+
+.city-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.time {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.route-arrow {
+    font-size: 32px;
+    color: #0bda51;
+    font-weight: 700;
+}
+
+.seat-legend {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin: 30px 0;
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.seat-example {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    border: 2px solid;
+}
+
+.seat-example.available {
+    background: #e8f5e9;
+    border-color: #0bda51;
+}
+
+.seat-example.booked {
+    background: #ffebee;
+    border-color: #e57373;
+}
+
+.seat-example.selected {
+    background: #0bda51;
+    border-color: #08a53d;
+}
+
+.seat-map-section {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    margin: 30px 0;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.airplane-container {
+    border: 4px solid #0bda51;
+    border-radius: 20px;
+    padding: 30px;
+    background: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.cabin-layout {
+    display: flex;
+    gap: 0;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 800px;
+    justify-content: center;
+}
+
+.aisle-center {
+    width: 50px;
+    background: repeating-linear-gradient(
+        90deg,
+        #e1e8ed 0px,
+        #e1e8ed 5px,
+        transparent 5px,
+        transparent 10px
+    );
+    min-height: 100%;
+    border-left: 2px dashed #0bda51;
+    border-right: 2px dashed #0bda51;
+    flex-shrink: 0;
+    margin: 0 10px;
+}
+
+.seats-left, .seats-right {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: auto;
+}
+
+.seat-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.header-row {
+    margin-bottom: 5px;
+}
+
+.seat-letter {
+    width: 45px;
+    height: 30px;
+    text-align: center;
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.row-number {
+    width: 40px;
+    text-align: center;
+    font-weight: 600;
+    color: #2c3e50;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.seat-btn {
+    width: 45px;
+    height: 45px;
+    border: 2px solid;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #e8f5e9;
+    border-color: #0bda51;
+    color: transparent;
+}
+
+.seat-btn.available:hover {
+    background: #0bda51;
+    color: white;
+    transform: scale(1.1);
+}
+
+.seat-btn.booked {
+    background: #ffebee;
+    border-color: #e57373;
+    color: #b71c1c;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.seat-btn.selected {
+    background: #0bda51;
+    border-color: #08a53d;
+    color: white;
+    box-shadow: 0 4px 12px rgba(11, 218, 81, 0.4);
+}
+
+
+.selected-seat-info {
+    text-align: center;
+    padding: 20px;
+    background: #f0fff4;
+    border-radius: 12px;
+    margin: 20px 0;
+    border: 2px solid #0bda51;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid #e1e8ed;
+}
+
+.back-btn {
+    padding: 12px 30px;
+    background: #f8f9fa;
+    color: #2c3e50;
+    border: 2px solid #e1e8ed;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.continue-btn {
+    padding: 12px 30px;
+    background: linear-gradient(45deg, #0bda51, #08a53d);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.continue-btn:hover:not(:disabled) {
+    background: linear-gradient(45deg, #08a53d, #007a1f);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11, 218, 81, 0.3);
+}
+
+.continue-btn:disabled {
+    background: #e1e8ed;
+    color: #95a5a6;
+    cursor: not-allowed;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const seatButtons = document.querySelectorAll('.seat-btn.available');
+    const selectedSeatInput = document.getElementById('selectedSeat');
+    const selectedSeatInfo = document.getElementById('selectedSeatInfo');
+    const selectedSeatNumber = document.getElementById('selectedSeatNumber');
+    const submitBtn = document.getElementById('submitBtn');
+    let currentSelected = null;
+    
+    seatButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const seat = this.getAttribute('data-seat');
+            
+            // Убираем выделение с предыдущего места
+            if (currentSelected) {
+                currentSelected.classList.remove('selected');
+                currentSelected.classList.add('available');
+            }
+            
+            // Выделяем новое место
+            this.classList.remove('available');
+            this.classList.add('selected');
+            currentSelected = this;
+            
+            // Обновляем скрытое поле и информацию
+            selectedSeatInput.value = seat;
+            selectedSeatNumber.textContent = seat;
+            selectedSeatInfo.style.display = 'block';
+            submitBtn.disabled = false;
+        });
+    });
+});
+</script>
+{% endblock %}

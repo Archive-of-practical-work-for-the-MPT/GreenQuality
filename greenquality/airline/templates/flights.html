@@ -1,0 +1,453 @@
+{% extends 'base.html' %}
+
+{% block title %}Рейсы - GreenQuality Airlines{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Получаем модальное окно
+    var modal = document.getElementById("flightModal");
+    
+    // Получаем кнопку закрытия
+    var span = document.getElementsByClassName("close")[0];
+    
+    // Функция для отображения деталей рейса
+    window.showFlightDetails = function(flightId) {
+        // Получаем данные рейса через API
+        fetch(`/api/flights/${flightId}/`)
+            .then(response => response.json())
+            .then(data => {
+                // Форматируем номер рейса
+                const flightNumber = 'GQ' + String(data.id_flight).padStart(3, '0');
+                
+                // Обновляем модальное окно с данными рейса
+                document.querySelector('#flightModal .modal-content h2').textContent = 
+                    `Детали рейса ${flightNumber}`;
+                
+                const details = document.querySelectorAll('.detail-row .value');
+                if (details.length >= 5) {
+                    // Направление
+                    details[0].textContent = `${data.departure_airport.city} → ${data.arrival_airport.city}`;
+                    
+                    // Расписание
+                    const depTime = new Date(data.departure_time);
+                    const arrTime = new Date(data.arrival_time);
+                    const depStr = depTime.toLocaleString('ru-RU', { 
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit' 
+                    });
+                    const arrStr = arrTime.toLocaleString('ru-RU', { 
+                        day: '2-digit', month: '2-digit', year: 'numeric',
+                        hour: '2-digit', minute: '2-digit' 
+                    });
+                    details[1].textContent = `Вылет ${depStr} | Прибытие ${arrStr}`;
+                    
+                    // Самолет
+                    details[2].textContent = `${data.airplane.model} (${data.airplane.registration_number})`;
+                    
+                    // Терминал (первая буква кода аэропорта)
+                    details[3].textContent = data.departure_airport.id_airport[0];
+                    
+                    // Статус
+                    const statusMap = {
+                        'SCHEDULED': 'По расписанию',
+                        'DELAYED': 'Задерживается',
+                        'CANCELLED': 'Отменен',
+                        'COMPLETED': 'Выполнен'
+                    };
+                    details[4].textContent = statusMap[data.status] || data.status;
+                    details[4].className = 'value status-' + data.status.toLowerCase();
+                }
+                
+                modal.style.display = "block";
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке данных рейса:', error);
+                alert('Не удалось загрузить детали рейса');
+            });
+    };
+    
+    // Закрытие модального окна при клике на ×
+    span.onclick = function() {
+        modal.style.display = "none";
+    }
+    
+    // Закрытие модального окна при клике вне его
+    window.onclick = function(event) {
+        if (event.target == modal) {
+            modal.style.display = "none";
+        }
+    }
+    
+    
+    
+    // Добавляем интерактивность для таблицы
+    function addTableRowInteractivity() {
+        var tableRows = document.querySelectorAll('.flights-table tbody tr');
+        tableRows.forEach(function(row) {
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = '#f0f8ff';
+            });
+            
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+    }
+    addTableRowInteractivity();
+    
+    // Функция для получения параметров фильтров из URL
+    function getFilterParams() {
+        const params = new URLSearchParams(window.location.search);
+        const filters = {};
+        if (params.get('departure')) filters.departure = params.get('departure');
+        if (params.get('arrival')) filters.arrival = params.get('arrival');
+        if (params.get('status')) filters.status = params.get('status');
+        if (params.get('date')) filters.date = params.get('date');
+        return filters;
+    }
+    
+    // Функция для построения URL с параметрами
+    function buildUrl(page, filters) {
+        const params = new URLSearchParams();
+        if (page > 1) params.set('page', page);
+        if (filters.departure) params.set('departure', filters.departure);
+        if (filters.arrival) params.set('arrival', filters.arrival);
+        if (filters.status) params.set('status', filters.status);
+        if (filters.date) params.set('date', filters.date);
+        const queryString = params.toString();
+        return queryString ? '?' + queryString : '';
+    }
+    
+    // Функция для загрузки страницы через AJAX
+    function loadPage(page) {
+        const filters = getFilterParams();
+        const url = buildUrl(page, filters);
+        
+        // Показываем индикатор загрузки
+        const tableBody = document.getElementById('flights-table-body');
+        const paginationContainer = document.getElementById('pagination-container');
+        tableBody.style.opacity = '0.5';
+        paginationContainer.style.opacity = '0.5';
+        
+        // Делаем AJAX запрос
+        fetch(window.location.pathname + url, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Обновляем таблицу
+            tableBody.innerHTML = data.table_html;
+            
+            // Обновляем пагинацию
+            paginationContainer.innerHTML = data.pagination_html;
+            
+            // Восстанавливаем прозрачность
+            tableBody.style.opacity = '1';
+            paginationContainer.style.opacity = '1';
+            
+            // Добавляем обработчики событий для новых элементов пагинации
+            attachPaginationHandlers();
+            
+            // Добавляем интерактивность для новых строк таблицы
+            addTableRowInteractivity();
+            
+            // Обновляем URL без перезагрузки страницы
+            const newUrl = window.location.pathname + url;
+            window.history.pushState({page: page}, '', newUrl);
+            
+            // Прокручиваем к началу таблицы
+            document.querySelector('.flights-table-section').scrollIntoView({ 
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        })
+        .catch(error => {
+            console.error('Ошибка при загрузке страницы:', error);
+            tableBody.style.opacity = '1';
+            paginationContainer.style.opacity = '1';
+            alert('Не удалось загрузить страницу');
+        });
+    }
+    
+    // Функция для привязки обработчиков событий к элементам пагинации
+    function attachPaginationHandlers() {
+        // Обработчики для номеров страниц
+        document.querySelectorAll('.pagination-number[data-page]').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = parseInt(this.getAttribute('data-page'));
+                loadPage(page);
+            });
+        });
+        
+        // Обработчики для кнопок "Назад" и "Вперед"
+        document.querySelectorAll('.pagination-btn[data-page]').forEach(function(link) {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const page = parseInt(this.getAttribute('data-page'));
+                loadPage(page);
+            });
+        });
+    }
+    
+    // Привязываем обработчики при загрузке страницы
+    attachPaginationHandlers();
+    
+    // Обработка кнопки "Назад" браузера
+    window.addEventListener('popstate', function(event) {
+        const params = new URLSearchParams(window.location.search);
+        const page = parseInt(params.get('page') || '1');
+        loadPage(page);
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Заголовок страницы -->
+    <section class="page-header">
+        <h1 class="page-title">Расписание рейсов</h1>
+        <p class="page-subtitle">Актуальное расписание всех направлений нашей авиакомпании</p>
+    </section>
+
+    <!-- Фильтры и поиск -->
+    <section class="flights-search">
+        <div class="search-container">
+            <form class="flights-filter-form" method="get" action="{% url 'flights' %}">
+                <div class="filter-row">
+                    <div class="form-group">
+                        <label for="departure">Город отправления</label>
+                        <select id="departure" name="departure">
+                            <option value="">Все города</option>
+                            {% for city in departure_cities %}
+                                <option value="{{ city }}" {% if current_filters.departure == city %}selected{% endif %}>
+                                    {{ city }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="arrival">Город прибытия</label>
+                        <select id="arrival" name="arrival">
+                            <option value="">Все города</option>
+                            {% for city in arrival_cities %}
+                                <option value="{{ city }}" {% if current_filters.arrival == city %}selected{% endif %}>
+                                    {{ city }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Дата</label>
+                        <input type="date" id="date" name="date" value="{{ current_filters.date }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="status">Статус</label>
+                        <select id="status" name="status">
+                            <option value="">Все статусы</option>
+                            <option value="scheduled" {% if current_filters.status == 'scheduled' %}selected{% endif %}>По расписанию</option>
+                            <option value="delayed" {% if current_filters.status == 'delayed' %}selected{% endif %}>Задерживается</option>
+                            <option value="cancelled" {% if current_filters.status == 'cancelled' %}selected{% endif %}>Отменен</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="filter-actions">
+                    <button type="submit" class="search-btn">Найти рейсы</button>
+                    <a href="{% url 'flights' %}" class="reset-btn">Сбросить фильтры</a>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <!-- Легенда статусов -->
+    <section class="status-legend">
+        <h3>Легенда статусов:</h3>
+        <div class="legend-items">
+            <div class="legend-item">
+                <span class="status-indicator scheduled"></span>
+                <span>По расписанию</span>
+            </div>
+            <div class="legend-item">
+                <span class="status-indicator delayed"></span>
+                <span>Задерживается</span>
+            </div>
+            <div class="legend-item">
+                <span class="status-indicator departed"></span>
+                <span>Вылетел</span>
+            </div>
+            <div class="legend-item">
+                <span class="status-indicator arrived"></span>
+                <span>Прибыл</span>
+            </div>
+            <div class="legend-item">
+                <span class="status-indicator cancelled"></span>
+                <span>Отменен</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Таблица рейсов -->
+    <section class="flights-table-section">
+        <h2 class="section-title">Актуальное расписание</h2>
+        <div class="table-container">
+            <table class="flights-table">
+                <thead>
+                    <tr>
+                        <th>Рейс</th>
+                        <th>Направление</th>
+                        <th>Вылет</th>
+                        <th>Прибытие</th>
+                        <th>Статус</th>
+                        <th>Терминал</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="flights-table-body">
+                    {% include 'flights_table.html' %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Пагинация -->
+        <div id="pagination-container">
+            {% include 'flights_pagination.html' %}
+        </div>
+    </section>
+
+    <!-- Популярные направления -->
+    <section class="popular-routes">
+        <h2 class="section-title">Популярные направления</h2>
+        <div class="routes-grid">
+            <div class="route-card">
+                <div class="route-header">
+                    <h3>Москва ↔ Санкт-Петербург</h3>
+                    <span class="frequency">Ежедневно</span>
+                </div>
+                <div class="route-details">
+                    <p>Самое популярное направление в России. Рейсы выполняются каждые 2-3 часа.</p>
+                    <div class="route-stats">
+                        <span>⏱️ В пути: 1ч 30мин</span>
+                        <span>✈️ Самолеты: Airbus A320</span>
+                    </div>
+                </div>
+            </div>
+            <div class="route-card">
+                <div class="route-header">
+                    <h3>Москва ↔ Сочи</h3>
+                    <span class="frequency">Ежедневно</span>
+                </div>
+                <div class="route-details">
+                    <p>Популярное направление для отдыха. Лето - особенно высокий спрос.</p>
+                    <div class="route-stats">
+                        <span>⏱️ В пути: 2ч 15мин</span>
+                        <span>✈️ Самолеты: Boeing 737</span>
+                    </div>
+                </div>
+            </div>
+            <div class="route-card">
+                <div class="route-header">
+                    <h3>Москва ↔ Париж</h3>
+                    <span class="frequency">5 раз в неделю</span>
+                </div>
+                <div class="route-details">
+                    <p>Один из самых престижных маршрутов нашей компании. Высокий уровень сервиса.</p>
+                    <div class="route-stats">
+                        <span>⏱️ В пути: 3ч 35мин</span>
+                        <span>✈️ Самолеты: Airbus A350</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Информация о терминалах -->
+    <section class="terminals-info">
+        <h2 class="section-title">Информация о терминалах</h2>
+        <div class="terminals-grid">
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <h3>Терминал A</h3>
+                    <span class="terminal-type">Внутренние рейсы</span>
+                </div>
+                <div class="terminal-services">
+                    <h4>Услуги:</h4>
+                    <ul>
+                        <li>Кафе и рестораны</li>
+                        <li>Магазины дьюти фри</li>
+                        <li>Wi-Fi бесплатно</li>
+                        <li>Зоны отдыха</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <h3>Терминал B</h3>
+                    <span class="terminal-type">Внутренние рейсы</span>
+                </div>
+                <div class="terminal-services">
+                    <h4>Услуги:</h4>
+                    <ul>
+                        <li>Детская игровая зона</li>
+                        <li>Бизнес-залы</li>
+                        <li>Банкоматы</li>
+                        <li>Медицинский пункт</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="terminal-card">
+                <div class="terminal-header">
+                    <h3>Терминал D</h3>
+                    <span class="terminal-type">Международные рейсы</span>
+                </div>
+                <div class="terminal-services">
+                    <h4>Услуги:</h4>
+                    <ul>
+                        <li>Паспортный контроль</li>
+                        <li>Таможня</li>
+                        <li>Валютные обменные пункты</li>
+                        <li>Места для молитвы</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Модальное окно деталей рейса -->
+<div id="flightModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Детали рейса</h2>
+        <div class="flight-details">
+            <div class="detail-row">
+                <span class="label">Направление:</span>
+                <span class="value">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Расписание:</span>
+                <span class="value">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Самолет:</span>
+                <span class="value">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Терминал:</span>
+                <span class="value">-</span>
+            </div>
+            <div class="detail-row">
+                <span class="label">Статус:</span>
+                <span class="value">-</span>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="book-btn">Забронировать</button>
+            <button class="track-btn">Отследить</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

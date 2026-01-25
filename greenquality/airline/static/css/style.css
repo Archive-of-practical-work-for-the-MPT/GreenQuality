@@ -90,6 +90,45 @@ body {
     width: 100%;
 }
 
+/* Стили для кнопок авторизации */
+.navigation ul li:last-child,
+.navigation ul li:nth-last-child(2) {
+    margin-left: 15px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.btn-outline {
+    color: #ffffff;
+    border-color: #ffffff;
+    background: transparent;
+}
+
+.btn-outline:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #00c853, #009624);
+    color: white;
+    box-shadow: 0 4px 15px rgba(0, 200, 83, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #009624, #007a1f);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 200, 83, 0.4);
+}
+
 /* Карусель */
 .carousel {
     width: 100%;

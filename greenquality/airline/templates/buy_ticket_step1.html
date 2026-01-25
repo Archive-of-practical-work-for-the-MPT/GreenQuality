@@ -1,0 +1,287 @@
+{% extends 'base.html' %}
+
+{% block title %}Выбор параметров билета - GreenQuality Airlines{% endblock %}
+
+{% block content %}
+<div class="container">
+    <section class="page-header">
+        <h1 class="page-title">Покупка билета</h1>
+        <p class="page-subtitle">Шаг 1: Выбор параметров</p>
+    </section>
+
+    <!-- Информация о рейсе -->
+    <section class="flight-info-card">
+        <div class="flight-info-header">
+            <h2>Информация о рейсе</h2>
+        </div>
+        <div class="flight-info-details">
+            <div class="flight-route">
+                <div class="route-point">
+                    <span class="airport-code">{{ flight.departure_airport_id.id_airport }}</span>
+                    <span class="city-name">{{ flight.departure_airport_id.city }}</span>
+                    <span class="time">{{ flight.departure_time|date:"H:i" }}</span>
+                    <span class="date">{{ flight.departure_time|date:"d.m.Y" }}</span>
+                </div>
+                <div class="route-arrow">→</div>
+                <div class="route-point">
+                    <span class="airport-code">{{ flight.arrival_airport_id.id_airport }}</span>
+                    <span class="city-name">{{ flight.arrival_airport_id.city }}</span>
+                    <span class="time">{{ flight.arrival_time|date:"H:i" }}</span>
+                    <span class="date">{{ flight.arrival_time|date:"d.m.Y" }}</span>
+                </div>
+            </div>
+            <div class="flight-meta">
+                <span>Рейс: GQ{{ flight.id_flight|stringformat:"03d" }}</span>
+                <span>Самолет: {{ flight.airplane_id.model }}</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Форма выбора параметров -->
+    <section class="booking-form-section">
+        <form method="post" class="booking-form">
+            {% csrf_token %}
+            
+            <div class="form-section">
+                <h3>Класс обслуживания</h3>
+                <div class="class-selection">
+                    {% for class_item in classes %}
+                        <label class="class-option">
+                            <input type="radio" name="class_id" value="{{ class_item.id_class }}" required>
+                            <div class="class-card">
+                                <div class="class-name">{{ class_item.get_class_name_display }}</div>
+                                <div class="class-description">
+                                    {% if class_item.class_name == 'ECONOMY' %}
+                                        Стандартные условия перелета
+                                    {% elif class_item.class_name == 'BUSINESS' %}
+                                        Увеличенное пространство для ног, улучшенное питание
+                                    {% elif class_item.class_name == 'FIRST' %}
+                                        Максимальный комфорт, премиальное обслуживание
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h3>Багаж (необязательно)</h3>
+                <div class="baggage-selection">
+                    <label class="baggage-option">
+                        <input type="radio" name="baggage_type_id" value="" checked>
+                        <div class="baggage-card">
+                            <div class="baggage-name">Без багажа</div>
+                            <div class="baggage-description">Только ручная кладь</div>
+                        </div>
+                    </label>
+                    {% for baggage_type in baggage_types %}
+                        <label class="baggage-option">
+                            <input type="radio" name="baggage_type_id" value="{{ baggage_type.id_baggage_type }}">
+                            <div class="baggage-card">
+                                <div class="baggage-name">{{ baggage_type.get_type_name_display }}</div>
+                                <div class="baggage-description">
+                                    До {{ baggage_type.max_weight_kg }} кг
+                                    {% if baggage_type.base_price %}
+                                        <span class="baggage-price">+{{ baggage_type.base_price }} ₽</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </label>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'flights' %}" class="cancel-btn">Отмена</a>
+                <button type="submit" class="continue-btn">Продолжить →</button>
+            </div>
+        </form>
+    </section>
+</div>
+
+<style>
+.flight-info-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    margin: 30px 0;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.flight-info-header h2 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 24px;
+}
+
+.flight-route {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 15px;
+}
+
+.route-point {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.airport-code {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0bda51;
+}
+
+.city-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.time {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2c3e50;
+}
+
+.date {
+    font-size: 14px;
+    color: #7f8c8d;
+}
+
+.route-arrow {
+    font-size: 32px;
+    color: #0bda51;
+    font-weight: 700;
+}
+
+.flight-meta {
+    display: flex;
+    gap: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e1e8ed;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.booking-form-section {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    margin: 30px 0;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.form-section {
+    margin-bottom: 40px;
+}
+
+.form-section h3 {
+    margin: 0 0 20px 0;
+    color: #2c3e50;
+    font-size: 20px;
+}
+
+.class-selection, .baggage-selection {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+}
+
+.class-option, .baggage-option {
+    cursor: pointer;
+}
+
+.class-option input[type="radio"],
+.baggage-option input[type="radio"] {
+    display: none;
+}
+
+.class-card, .baggage-card {
+    padding: 20px;
+    border: 2px solid #e1e8ed;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    background: white;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.class-option input[type="radio"]:checked + .class-card,
+.baggage-option input[type="radio"]:checked + .baggage-card {
+    border-color: #0bda51;
+    background: #f0fff4;
+    box-shadow: 0 4px 12px rgba(11, 218, 81, 0.2);
+}
+
+.class-name, .baggage-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 8px;
+}
+
+.class-description, .baggage-description {
+    font-size: 14px;
+    color: #7f8c8d;
+    line-height: 1.5;
+}
+
+.baggage-price {
+    color: #0bda51;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 30px;
+    padding-top: 30px;
+    border-top: 1px solid #e1e8ed;
+}
+
+.cancel-btn {
+    padding: 12px 30px;
+    background: #f8f9fa;
+    color: #2c3e50;
+    border: 2px solid #e1e8ed;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.cancel-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+}
+
+.continue-btn {
+    padding: 12px 30px;
+    background: linear-gradient(45deg, #0bda51, #08a53d);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.continue-btn:hover {
+    background: linear-gradient(45deg, #08a53d, #007a1f);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11, 218, 81, 0.3);
+}
+</style>
+{% endblock %}

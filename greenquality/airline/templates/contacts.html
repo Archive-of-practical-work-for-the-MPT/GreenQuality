@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block title %}Контакты - GreenQuality Airlines{% endblock %}
+
+{% block content %}
+<div class="container">
+    <!-- Заголовок страницы -->
+    <section class="page-header">
+        <h1 class="page-title">Контакты</h1>
+        <p class="page-subtitle">Свяжитесь с нами любым удобным способом</p>
+    </section>
+
+    <!-- Контактная информация -->
+    <section class="contact-info">
+        <div class="contact-grid">
+            <div class="contact-card">
+                <div class="contact-icon">📞</div>
+                <h3>Телефон</h3>
+                <p>+7 (495) 123-45-67</p>
+                <p>+7 (495) 987-65-43</p>
+                <small>Круглосуточно, без выходных</small>
+            </div>
+            <div class="contact-card">
+                <div class="contact-icon">✉️</div>
+                <h3>Email</h3>
+                <p>info@greenquality.ru</p>
+                <p>support@greenquality.ru</p>
+                <small>Ответ в течение 2 часов</small>
+            </div>
+            <div class="contact-card">
+                <div class="contact-icon">📍</div>
+                <h3>Адрес</h3>
+                <p>125009, Москва</p>
+                <p>ул. Тверская, д. 15</p>
+                <small>Главный офис компании</small>
+            </div>
+        </div>
+    </section>
+
+    <!-- Форма обратной связи -->
+    <section class="feedback-section">
+        <h2 class="section-title">Форма обратной связи</h2>
+        <div class="feedback-container">
+            <form class="feedback-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="name">Имя *</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email *</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Телефон</label>
+                    <input type="tel" id="phone" name="phone">
+                </div>
+                <div class="form-group">
+                    <label for="subject">Тема обращения *</label>
+                    <select id="subject" name="subject" required>
+                        <option value="">Выберите тему</option>
+                        <option value="booking">Бронирование и билеты</option>
+                        <option value="flight">Информация о рейсе</option>
+                        <option value="baggage">Багаж и провоз</option>
+                        <option value="refund">Возврат и обмен билетов</option>
+                        <option value="complaint">Жалоба или предложение</option>
+                        <option value="other">Другое</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="message">Сообщение *</label>
+                    <textarea id="message" name="message" rows="6" placeholder="Введите ваше сообщение..." required></textarea>
+                </div>
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="consent" required>
+                        <span class="checkmark"></span>
+                        Я согласен на обработку персональных данных *
+                    </label>
+                </div>
+                <button type="submit" class="submit-btn">Отправить сообщение</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Офисы и представительства -->
+    <section class="offices-section">
+        <h2 class="section-title">Наши офисы</h2>
+        <div class="offices-grid">
+            <div class="office-card">
+                <h3>Центральный офис</h3>
+                <p class="office-location">📍 Москва, ул. Тверская, д. 15</p>
+                <p class="office-hours">🕒 Пн-Пт: 9:00-20:00, Сб-Вс: 10:00-18:00</p>
+                <p class="office-phone">📞 +7 (495) 123-45-67</p>
+            </div>
+            <div class="office-card">
+                <h3>Офис в Санкт-Петербурге</h3>
+                <p class="office-location">📍 Санкт-Петербург, Невский проспект, д. 28</p>
+                <p class="office-hours">🕒 Пн-Пт: 9:00-19:00, Сб: 10:00-16:00</p>
+                <p class="office-phone">📞 +7 (812) 345-67-89</p>
+            </div>
+            <div class="office-card">
+                <h3>Офис в Екатеринбурге</h3>
+                <p class="office-location">📍 Екатеринбург, ул. Ленина, д. 52</p>
+                <p class="office-hours">🕒 Пн-Пт: 9:00-18:00</p>
+                <p class="office-phone">📞 +7 (343) 234-56-78</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Часто задаваемые вопросы -->
+    <section class="quick-faq">
+        <h2 class="section-title">Полезная информация</h2>
+        <div class="faq-grid">
+            <div class="faq-card">
+                <h3>Как забронировать билет?</h3>
+                <p>Вы можете забронировать билет через наш сайт, мобильное приложение или позвонив в службу поддержки по телефону +7 (495) 123-45-67.</p>
+            </div>
+            <div class="faq-card">
+                <h3>Можно ли вернуть билет?</h3>
+                <p>Да, билеты можно вернуть в соответствии с правилами тарифа. Подробную информацию уточняйте у наших операторов.</p>
+            </div>
+            <div class="faq-card">
+                <h3>Как зарегистрироваться на рейс?</h3>
+                <p>Онлайн-регистрация доступна за 24 часа до вылета. Также можно зарегистрироваться в аэропорту у стойки регистрации.</p>
+            </div>
+            <div class="faq-card">
+                <h3>Что входит в стоимость билета?</h3>
+                <p>В стоимость входят все обязательные сборы и налоги. Дополнительные услуги (багаж, выбор места) оплачиваются отдельно.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Социальные сети -->
+    <section class="social-section">
+        <h2 class="section-title">Мы в социальных сетях</h2>
+        <div class="social-links-large">
+            <a href="#" class="social-link">
+                <div class="social-icon-large">📘</div>
+                <div class="social-info">
+                    <h3>VKontakte</h3>
+                    <p>Официальная группа авиакомпании</p>
+                </div>
+            </a>
+            <a href="#" class="social-link">
+                <div class="social-icon-large">✈️</div>
+                <div class="social-info">
+                    <h3>Telegram</h3>
+                    <p>Быстрые уведомления и поддержка</p>
+                </div>
+            </a>
+            <a href="#" class="social-link">
+                <div class="social-icon-large">📱</div>
+                <div class="social-info">
+                    <h3>MAX</h3>
+                    <p>Новости и специальные предложения</p>
+                </div>
+            </a>
+        </div>
+    </section>
+</div>
+{% endblock %}
