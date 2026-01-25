@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils.dateparse import parse_date
-from .models import User, Account, Role
+from django.db.models import Q
+from .models import User, Account, Role, Payment, Ticket, Flight, Passenger
 
 
 def index(request):
@@ -248,6 +249,29 @@ def profile_view(request):
             messages.success(request, 'Профиль успешно обновлен')
             return redirect('profile')
         
+        # Получаем историю покупок пользователя
+        # Находим все платежи пользователя
+        payments = Payment.objects.filter(user_id=user).order_by('-payment_date')
+        
+        # Получаем все билеты, связанные с этими платежами
+        tickets = []
+        for payment in payments:
+            payment_tickets = Ticket.objects.filter(payment_id=payment).select_related(
+                'flight_id', 'flight_id__departure_airport_id', 
+                'flight_id__arrival_airport_id', 'class_id', 'passenger_id'
+            )
+            for ticket in payment_tickets:
+                tickets.append({
+                    'ticket': ticket,
+                    'payment': payment,
+                    'flight': ticket.flight_id,
+                    'class_name': ticket.class_id.class_name,
+                    'passenger': ticket.passenger_id,
+                })
+        
+        # Сортируем билеты по дате платежа (новые сначала)
+        tickets.sort(key=lambda x: x['payment'].payment_date, reverse=True)
+        
         # Подготавливаем контекст для отображения
         context = {
             'user': user,
@@ -259,6 +283,8 @@ def profile_view(request):
             'phone': user.phone or '',
             'passport_number': user.passport_number or '',
             'birthday': user.birthday.strftime('%d.%m.%Y') if user.birthday else '',
+            'tickets': tickets,
+            'total_tickets': len(tickets),
         }
         
         return render(request, 'profile.html', context)
