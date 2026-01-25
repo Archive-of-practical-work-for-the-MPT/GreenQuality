@@ -154,6 +154,7 @@ def admin_panel(request):
             'model_info': model_info,
             'objects': objects,
             'fields': model_info['fields'],
+            'panel_type': 'admin',  # Тип панели для выбора правильных URL
         }
         
         return render(request, 'admin_panel.html', context)
@@ -545,6 +546,7 @@ def manager_panel(request):
             'model_info': model_info,
             'objects': objects,
             'fields': model_info['fields'],
+            'panel_type': 'manager',  # Тип панели для выбора правильных URL
         }
         
         return render(request, 'admin_panel.html', context)

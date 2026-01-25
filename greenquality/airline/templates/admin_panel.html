@@ -735,7 +735,12 @@ function showCreateForm() {
 
 function editRecord(tableName, recordId) {
     // Загружаем данные записи через AJAX
-    fetch(`{% url "admin_get_record" %}?table=${tableName}&id=${recordId}`)
+    {% if panel_type == 'admin' %}
+    const getRecordUrl = '{% url "admin_get_record" %}';
+    {% else %}
+    const getRecordUrl = '{% url "manager_get_record" %}';
+    {% endif %}
+    fetch(`${getRecordUrl}?table=${tableName}&id=${recordId}`)
         .then(response => response.json())
         .then(data => {
             document.getElementById('modalTitle').textContent = 'Изменить запись: {{ model_info.name }}';
@@ -841,7 +846,12 @@ function generateFormFields(tableName, data, action = 'create') {
 }
 
 function loadSelectOptions(selectElement, modelName, selectedValue) {
-    fetch(`{% url "admin_get_options" %}?model=${modelName}`)
+    {% if panel_type == 'admin' %}
+    const getOptionsUrl = '{% url "admin_get_options" %}';
+    {% else %}
+    const getOptionsUrl = '{% url "manager_get_options" %}';
+    {% endif %}
+    fetch(`${getOptionsUrl}?model=${modelName}`)
         .then(response => response.json())
         .then(options => {
             options.forEach(option => {
@@ -866,7 +876,11 @@ function deleteRecord(tableName, recordId) {
     
     const form = document.createElement('form');
     form.method = 'post';
+    {% if panel_type == 'admin' %}
     form.action = '{% url "admin_crud" %}';
+    {% else %}
+    form.action = '{% url "manager_crud" %}';
+    {% endif %}
     
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
     const csrfInput = document.createElement('input');
