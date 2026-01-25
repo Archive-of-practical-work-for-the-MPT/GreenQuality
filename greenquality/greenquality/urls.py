@@ -19,5 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('api/', include('airline.api_urls')),  # RESTful API endpoints
     path('', include('airline.urls')),
 ]
