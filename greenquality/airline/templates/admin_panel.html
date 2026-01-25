@@ -12,9 +12,11 @@
     {% if messages %}
         <div class="messages-container">
             {% for message in messages %}
-                <div class="message message-{{ message.tags }}">
-                    {{ message }}
-                </div>
+                {% if message.message != "Вы успешно вошли в систему!" %}
+                    <div class="message message-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endif %}
             {% endfor %}
         </div>
     {% endif %}

@@ -11,7 +11,10 @@ from datetime import timedelta
 import csv
 import json
 from .models import User, Account, Role, Payment, Ticket, Flight, Passenger, Airport, Class, BaggageType, Baggage, Airplane, AuditLog
-from .admin_views import admin_panel, admin_crud, admin_get_record, admin_get_options
+from .admin_views import (
+    admin_panel, admin_crud, admin_get_record, admin_get_options,
+    manager_panel, manager_crud, manager_get_record, manager_get_options
+)
 from decimal import Decimal
 
 

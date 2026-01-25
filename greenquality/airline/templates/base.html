@@ -27,6 +27,8 @@
                         <li><a href="{% url 'profile' %}">Профиль</a></li>
                         {% if is_admin %}
                             <li><a href="{% url 'admin_panel' %}">Панель</a></li>
+                        {% elif is_manager %}
+                            <li><a href="{% url 'manager_panel' %}">Панель</a></li>
                         {% endif %}
                         <li><a href="{% url 'logout' %}">Выход</a></li>
                     {% else %}

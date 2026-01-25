@@ -1,6 +1,7 @@
 """Функции для панели администратора"""
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.messages import get_messages
 from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password
 from django.utils.dateparse import parse_date, parse_datetime
@@ -139,6 +140,13 @@ def admin_panel(request):
         
         # Сортируем по первичному ключу
         objects = objects.order_by('-pk')[:100]  # Ограничиваем 100 записями для производительности
+        
+        # Удаляем сообщения об успешном входе из панели
+        storage = get_messages(request)
+        for message in storage:
+            if message.message == 'Вы успешно вошли в систему!':
+                storage.used = False
+                break
         
         context = {
             'models_info': models_info,
@@ -420,6 +428,359 @@ def admin_get_options(request):
             'Flight': (Flight, 'id_flight', lambda x: f"GQ{x.id_flight:03d}"),
             'Passenger': (Passenger, 'id_passenger', lambda x: f"{x.first_name} {x.last_name}"),
             'Class': (Class, 'id_class', 'class_name'),
+            'Payment': (Payment, 'id_payment', 'id_payment'),
+            'Ticket': (Ticket, 'id_ticket', 'id_ticket'),
+            'BaggageType': (BaggageType, 'id_baggage_type', 'type_name'),
+            'Baggage': (Baggage, 'id_baggage', 'baggage_tag'),
+        }
+        
+        if model_name not in model_map:
+            return JsonResponse({'error': 'Неизвестная модель'}, status=400)
+        
+        model, pk_field, display_field = model_map[model_name]
+        objects = model.objects.all()[:100]  # Ограничиваем для производительности
+        
+        options = []
+        for obj in objects:
+            pk_value = getattr(obj, pk_field)
+            if callable(display_field):
+                display_value = display_field(obj)
+            else:
+                display_value = getattr(obj, display_field)
+            options.append({
+                'value': pk_value,
+                'text': str(display_value)
+            })
+        
+        return JsonResponse(options, safe=False)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def manager_panel(request):
+    """Панель менеджера с CRUD для ограниченного набора таблиц"""
+    # Проверка авторизации
+    if 'account_id' not in request.session:
+        messages.error(request, 'Для доступа к панели менеджера необходимо войти в систему')
+        return redirect('login')
+    
+    account_id = request.session['account_id']
+    
+    try:
+        account = Account.objects.get(id_account=account_id)
+        # Проверка роли менеджера
+        if not account.role_id or account.role_id.role_name != 'MANAGER':
+            messages.error(request, 'У вас нет доступа к панели менеджера')
+            return redirect('index')
+        
+        # Определяем доступные модели для менеджера (ограниченный список)
+        models_info = {
+            'Flight': {
+                'model': Flight,
+                'name': 'Рейсы',
+                'fields': ['id_flight', 'airplane_id', 'departure_airport_id', 'arrival_airport_id', 'departure_time', 'arrival_time', 'status'],
+                'readonly': False,
+            },
+            'Passenger': {
+                'model': Passenger,
+                'name': 'Пассажиры',
+                'fields': ['id_passenger', 'first_name', 'last_name', 'patronymic', 'passport_number', 'birthday'],
+                'readonly': False,
+            },
+            'Payment': {
+                'model': Payment,
+                'name': 'Платежи',
+                'fields': ['id_payment', 'user_id', 'payment_date', 'total_cost', 'payment_method', 'status'],
+                'readonly': False,
+            },
+            'Ticket': {
+                'model': Ticket,
+                'name': 'Билеты',
+                'fields': ['id_ticket', 'flight_id', 'class_id', 'seat_number', 'price', 'status', 'passenger_id', 'payment_id'],
+                'readonly': False,
+            },
+            'Baggage': {
+                'model': Baggage,
+                'name': 'Багаж',
+                'fields': ['id_baggage', 'ticket_id', 'baggage_type_id', 'weight_kg', 'baggage_tag', 'status', 'registered_at'],
+                'readonly': False,
+            },
+        }
+        
+        # Получаем выбранную таблицу из GET параметра
+        selected_table = request.GET.get('table', 'Flight')
+        if selected_table not in models_info:
+            selected_table = 'Flight'
+        
+        model_info = models_info[selected_table]
+        model = model_info['model']
+        
+        # Получаем все записи выбранной таблицы
+        objects = model.objects.all()
+        
+        # Применяем select_related для ForeignKey полей
+        if selected_table == 'Flight':
+            objects = objects.select_related('airplane_id', 'departure_airport_id', 'arrival_airport_id')
+        elif selected_table == 'Ticket':
+            objects = objects.select_related('flight_id', 'class_id', 'passenger_id', 'payment_id')
+        elif selected_table == 'Payment':
+            objects = objects.select_related('user_id')
+        elif selected_table == 'Baggage':
+            objects = objects.select_related('ticket_id', 'baggage_type_id')
+        
+        # Сортируем по первичному ключу
+        objects = objects.order_by('-pk')[:100]  # Ограничиваем 100 записями для производительности
+        
+        # Удаляем сообщения об успешном входе из панели
+        storage = get_messages(request)
+        for message in storage:
+            if message.message == 'Вы успешно вошли в систему!':
+                storage.used = False
+                break
+        
+        context = {
+            'models_info': models_info,
+            'selected_table': selected_table,
+            'model_info': model_info,
+            'objects': objects,
+            'fields': model_info['fields'],
+        }
+        
+        return render(request, 'admin_panel.html', context)
+        
+    except Account.DoesNotExist:
+        messages.error(request, 'Аккаунт не найден')
+        return redirect('login')
+    except Exception as e:
+        messages.error(request, f'Ошибка: {str(e)}')
+        return redirect('index')
+
+
+def manager_crud(request):
+    """Обработка CRUD операций для панели менеджера"""
+    # Проверка авторизации
+    if 'account_id' not in request.session:
+        messages.error(request, 'Для доступа к панели менеджера необходимо войти в систему')
+        return redirect('login')
+    
+    account_id = request.session['account_id']
+    
+    try:
+        account = Account.objects.get(id_account=account_id)
+        # Проверка роли менеджера
+        if not account.role_id or account.role_id.role_name != 'MANAGER':
+            messages.error(request, 'У вас нет доступа к панели менеджера')
+            return redirect('index')
+        
+        table_name = request.POST.get('table_name')
+        action = request.POST.get('action')  # create, update, delete
+        record_id = request.POST.get('record_id')
+        
+        # Маппинг имен таблиц на модели (только доступные для менеджера)
+        model_map = {
+            'Flight': Flight,
+            'Passenger': Passenger,
+            'Payment': Payment,
+            'Ticket': Ticket,
+            'Baggage': Baggage,
+        }
+        
+        if table_name not in model_map:
+            messages.error(request, 'У вас нет доступа к этой таблице')
+            return redirect('manager_panel')
+        
+        model = model_map[table_name]
+        
+        if action == 'delete':
+            if not record_id:
+                messages.error(request, 'ID записи не указан')
+                return redirect('manager_panel')
+            try:
+                obj = model.objects.get(pk=record_id)
+                obj.delete()
+                messages.success(request, 'Запись успешно удалена')
+            except model.DoesNotExist:
+                messages.error(request, 'Запись не найдена')
+            except Exception as e:
+                messages.error(request, f'Ошибка при удалении: {str(e)}')
+            return redirect(f'/manager-panel/?table={table_name}')
+        
+        elif action in ['create', 'update']:
+            # Получаем данные из POST
+            data = {}
+            for key, value in request.POST.items():
+                if key not in ['csrfmiddlewaretoken', 'table_name', 'action', 'record_id']:
+                    if value:  # Только непустые значения
+                        data[key] = value
+            
+            # Обрабатываем ForeignKey поля
+            fk_fields_map = {
+                'airplane_id': Airplane,
+                'departure_airport_id': Airport,
+                'arrival_airport_id': Airport,
+                'user_id': User,
+                'class_id': Class,
+                'passenger_id': Passenger,
+                'flight_id': Flight,
+                'payment_id': Payment,
+                'ticket_id': Ticket,
+                'baggage_type_id': BaggageType,
+            }
+            
+            for field_name, related_model in fk_fields_map.items():
+                if field_name in data and data[field_name]:
+                    try:
+                        data[field_name] = related_model.objects.get(pk=data[field_name])
+                    except related_model.DoesNotExist:
+                        messages.error(request, f'Связанная запись не найдена для поля {field_name}')
+                        return redirect(f'/manager-panel/?table={table_name}')
+                elif field_name in data:
+                    data[field_name] = None
+            
+            # Обрабатываем специальные поля
+            if 'birthday' in data:
+                if data['birthday']:
+                    try:
+                        from django.utils.dateparse import parse_date
+                        data['birthday'] = parse_date(data['birthday'])
+                    except:
+                        data['birthday'] = None
+                else:
+                    data['birthday'] = None
+            
+            # Обрабатываем Decimal поля
+            decimal_fields = ['total_cost', 'price', 'weight_kg']
+            for field_name in decimal_fields:
+                if field_name in data and data[field_name]:
+                    try:
+                        data[field_name] = Decimal(str(data[field_name]))
+                    except:
+                        pass
+            
+            # Обрабатываем datetime поля
+            if 'departure_time' in data or 'arrival_time' in data or 'payment_date' in data or 'registered_at' in data:
+                from django.utils.dateparse import parse_datetime
+                datetime_fields = ['departure_time', 'arrival_time', 'payment_date', 'registered_at']
+                for field_name in datetime_fields:
+                    if field_name in data and data[field_name]:
+                        try:
+                            data[field_name] = parse_datetime(data[field_name])
+                        except:
+                            pass
+            
+            if action == 'create':
+                # Создаем новую запись
+                try:
+                    obj = model.objects.create(**data)
+                    messages.success(request, 'Запись успешно создана')
+                except Exception as e:
+                    messages.error(request, f'Ошибка при создании: {str(e)}')
+            elif action == 'update':
+                # Обновляем существующую запись
+                if not record_id:
+                    messages.error(request, 'ID записи не указан')
+                    return redirect(f'/manager-panel/?table={table_name}')
+                try:
+                    obj = model.objects.get(pk=record_id)
+                    for key, value in data.items():
+                        setattr(obj, key, value)
+                    obj.save()
+                    messages.success(request, 'Запись успешно обновлена')
+                except model.DoesNotExist:
+                    messages.error(request, 'Запись не найдена')
+                except Exception as e:
+                    messages.error(request, f'Ошибка при обновлении: {str(e)}')
+            
+            return redirect(f'/manager-panel/?table={table_name}')
+        
+        return redirect('manager_panel')
+        
+    except Account.DoesNotExist:
+        messages.error(request, 'Аккаунт не найден')
+        return redirect('login')
+    except Exception as e:
+        messages.error(request, f'Ошибка: {str(e)}')
+        return redirect('index')
+
+
+def manager_get_record(request):
+    """Получение данных записи для редактирования (для менеджера)"""
+    # Проверка авторизации
+    if 'account_id' not in request.session:
+        return JsonResponse({'error': 'Не авторизован'}, status=401)
+    
+    account_id = request.session['account_id']
+    
+    try:
+        account = Account.objects.get(id_account=account_id)
+        if not account.role_id or account.role_id.role_name != 'MANAGER':
+            return JsonResponse({'error': 'Нет доступа'}, status=403)
+        
+        table_name = request.GET.get('table')
+        record_id = request.GET.get('id')
+        
+        # Маппинг имен таблиц на модели (только доступные для менеджера)
+        model_map = {
+            'Flight': Flight,
+            'Passenger': Passenger,
+            'Payment': Payment,
+            'Ticket': Ticket,
+            'Baggage': Baggage,
+        }
+        
+        if table_name not in model_map:
+            return JsonResponse({'error': 'У вас нет доступа к этой таблице'}, status=403)
+        
+        model = model_map[table_name]
+        obj = model.objects.get(pk=record_id)
+        
+        # Преобразуем объект в словарь
+        data = {}
+        for field in model._meta.get_fields():
+            if hasattr(obj, field.name):
+                # Не возвращаем пароль при редактировании (безопасность)
+                if field.name == 'password':
+                    continue
+                value = getattr(obj, field.name)
+                if value is None:
+                    data[field.name] = None
+                elif hasattr(value, 'pk'):  # ForeignKey
+                    data[field.name] = value.pk
+                elif hasattr(value, 'isoformat'):  # DateTime или Date
+                    data[field.name] = value.isoformat()
+                else:
+                    data[field.name] = str(value)
+        
+        return JsonResponse(data)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def manager_get_options(request):
+    """Получение опций для select полей (для менеджера)"""
+    # Проверка авторизации
+    if 'account_id' not in request.session:
+        return JsonResponse({'error': 'Не авторизован'}, status=401)
+    
+    account_id = request.session['account_id']
+    
+    try:
+        account = Account.objects.get(id_account=account_id)
+        if not account.role_id or account.role_id.role_name != 'MANAGER':
+            return JsonResponse({'error': 'Нет доступа'}, status=403)
+        
+        model_name = request.GET.get('model')
+        
+        # Маппинг для опций (включая связанные модели)
+        model_map = {
+            'Airplane': (Airplane, 'id_airplane', 'model'),
+            'Airport': (Airport, 'id_airport', 'name'),
+            'User': (User, 'id_user', lambda x: f"{x.first_name} {x.last_name}"),
+            'Class': (Class, 'id_class', 'class_name'),
+            'Passenger': (Passenger, 'id_passenger', lambda x: f"{x.first_name} {x.last_name}"),
+            'Flight': (Flight, 'id_flight', lambda x: f"GQ{x.id_flight:03d}"),
             'Payment': (Payment, 'id_payment', 'id_payment'),
             'Ticket': (Ticket, 'id_ticket', 'id_ticket'),
             'BaggageType': (BaggageType, 'id_baggage_type', 'type_name'),

@@ -17,5 +17,9 @@ urlpatterns = [
     path('admin-panel/crud/', views.admin_crud, name='admin_crud'),
     path('admin-panel/get-record/', views.admin_get_record, name='admin_get_record'),
     path('admin-panel/get-options/', views.admin_get_options, name='admin_get_options'),
+    path('manager-panel/', views.manager_panel, name='manager_panel'),
+    path('manager-panel/crud/', views.manager_crud, name='manager_crud'),
+    path('manager-panel/get-record/', views.manager_get_record, name='manager_get_record'),
+    path('manager-panel/get-options/', views.manager_get_options, name='manager_get_options'),
     path('profile/export/<str:format_type>/', views.export_statistics, name='export_statistics'),
 ]
