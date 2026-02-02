@@ -283,20 +283,16 @@ def admin_crud(request):
                 elif field_name in data:
                     data[field_name] = None
             
-            # Обрабатываем пароль отдельно
-            # При создании - пароль обязателен
-            # При обновлении - пароль обновляется только если он был введен (не пустой)
-            if action == 'create':
-                if not password_field_present or not password_value:
-                    messages.error(request, 'Пароль обязателен при создании аккаунта')
-                    return redirect(f'/admin-panel/?table={table_name}')
-                data['password'] = make_password(password_value)
-            elif action == 'update':
-                # При обновлении пароль обновляется только если он был введен
-                if password_field_present and password_value:
+            # Обрабатываем пароль отдельно (только для таблицы Account)
+            if table_name == 'Account':
+                if action == 'create':
+                    if not password_field_present or not password_value:
+                        messages.error(request, 'Пароль обязателен при создании аккаунта')
+                        return redirect(f'/admin-panel/?table={table_name}')
                     data['password'] = make_password(password_value)
-                # Если пароль не был введен, просто не добавляем его в data
-                # и он не будет обновлен
+                elif action == 'update':
+                    if password_field_present and password_value:
+                        data['password'] = make_password(password_value)
             
             if 'birthday' in data:
                 if data['birthday']:

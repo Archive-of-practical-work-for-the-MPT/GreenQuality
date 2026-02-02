@@ -11,11 +11,13 @@
     </div>
 
     {% if messages %}
-        <div class="messages-container">
+        <div class="admin-notifications">
             {% for message in messages %}
                 {% if message.message != "Вы успешно вошли в систему!" %}
-                    <div class="message message-{{ message.tags }}">
-                        {{ message }}
+                    <div class="admin-notification admin-notification-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+                        <span class="admin-notification-icon">{% if message.tags == 'error' %}⚠{% elif message.tags == 'success' %}✓{% else %}ℹ{% endif %}</span>
+                        <span class="admin-notification-text">{{ message }}</span>
+                        <button type="button" class="admin-notification-close" onclick="this.parentElement.remove()">&times;</button>
                     </div>
                 {% endif %}
             {% endfor %}
@@ -333,6 +335,84 @@
     font-size: 18px;
 }
 
+/* Уведомления (ошибки, успех) */
+.admin-notifications {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 420px;
+}
+
+.admin-notification {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    font-size: 15px;
+    font-weight: 500;
+    animation: admin-notification-in 0.3s ease;
+}
+
+@keyframes admin-notification-in {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.admin-notification-error {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+    border: 2px solid #e74c3c;
+    color: #c0392b;
+}
+
+.admin-notification-success {
+    background: linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%);
+    border: 2px solid #0bda51;
+    color: #2e7d32;
+}
+
+.admin-notification-info {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+    border: 2px solid #3498db;
+    color: #1976d2;
+}
+
+.admin-notification-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.admin-notification-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.admin-notification-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    opacity: 0.6;
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.admin-notification-close:hover {
+    opacity: 1;
+}
+
 .admin-panel-wrapper {
     max-width: 1400px;
     margin: 0 auto;
@@ -537,11 +617,13 @@
 
 .modal-content {
     background-color: var(--bg-color, white);
-    margin: 5% auto;
+    margin: 3% auto;
     padding: 30px;
     border-radius: 20px;
     width: 90%;
     max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 10px 40px var(--shadow-color, rgba(0, 0, 0, 0.3));
     position: relative;
     transition: background-color 0.3s ease;
@@ -746,12 +828,13 @@ const modelFields = {
         'seat_number': {type: 'text', label: 'Номер места', required: true},
         'price': {type: 'number', label: 'Цена', required: true, step: '0.01'},
         'status': {type: 'select', label: 'Статус', required: true, choices: [
+            ['AVAILABLE', 'Свободен'],
             ['BOOKED', 'Забронирован'],
             ['PAID', 'Оплачен'],
             ['CHECKED_IN', 'Зарегистрирован'],
             ['CANCELLED', 'Отменен']
         ]},
-        'passenger_id': {type: 'select', label: 'Пассажир', required: true, model: 'Passenger'},
+        'passenger_id': {type: 'select', label: 'Пассажир', required: false, model: 'Passenger'},
         'payment_id': {type: 'select', label: 'Платеж', required: false, model: 'Payment'}
     },
     'BaggageType': {
@@ -973,12 +1056,6 @@ function closeModal() {
     document.getElementById('recordModal').style.display = 'none';
 }
 
-// Закрытие модального окна при клике вне его
-window.onclick = function(event) {
-    const modal = document.getElementById('recordModal');
-    if (event.target == modal) {
-        closeModal();
-    }
-}
+// Не закрывать модальное окно при клике вне его (только по кнопке X или Отмена)
 </script>
 {% endblock %}

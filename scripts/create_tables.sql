@@ -129,9 +129,9 @@ CREATE TABLE tickets (
     flight_id INTEGER NOT NULL REFERENCES flights(id_flight) ON DELETE CASCADE,
     class_id INTEGER NOT NULL REFERENCES class(id_class) ON DELETE CASCADE,
     seat_number VARCHAR(5) NOT NULL,
-    price NUMERIC(8, 2) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'BOOKED',
-    passenger_id INTEGER NOT NULL REFERENCES passengers(id_passenger) ON DELETE CASCADE,
+    price NUMERIC(8, 2) NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
+    passenger_id INTEGER REFERENCES passengers(id_passenger) ON DELETE CASCADE,
     payment_id INTEGER REFERENCES payments(id_payment) ON DELETE SET NULL,
     CONSTRAINT unique_flight_seat UNIQUE (flight_id, seat_number)
 );

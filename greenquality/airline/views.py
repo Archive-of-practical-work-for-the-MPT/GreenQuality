@@ -1120,6 +1120,11 @@ def buy_ticket_confirm(request, flight_id):
                 request, 'Это место уже занято. Пожалуйста, выберите другое место.')
             return redirect('buy_ticket_seat', flight_id=flight_id)
 
+        # Ищем существующий свободный билет (созданный триггером при добавлении рейса)
+        existing_ticket = Ticket.objects.filter(
+            flight_id=flight, seat_number=seat_number, status='AVAILABLE'
+        ).first()
+
         # Рассчитываем цену (базовая цена зависит от класса)
         base_prices = {
             'ECONOMY': Decimal('5000.00'),
@@ -1168,16 +1173,25 @@ def buy_ticket_confirm(request, flight_id):
                 status='COMPLETED',  # Пока автоматически завершаем платеж
             )
 
-            # Создаем билет
-            ticket = Ticket.objects.create(
-                flight_id=flight,
-                class_id=class_obj,
-                seat_number=seat_number,
-                price=total_price,
-                status='PAID',
-                passenger_id=passenger,
-                payment_id=payment,
-            )
+            # Обновляем существующий билет или создаём новый (для старых рейсов без триггера)
+            if existing_ticket:
+                existing_ticket.class_id = class_obj
+                existing_ticket.price = total_price
+                existing_ticket.status = 'PAID'
+                existing_ticket.passenger_id = passenger
+                existing_ticket.payment_id = payment
+                existing_ticket.save()
+                ticket = existing_ticket
+            else:
+                ticket = Ticket.objects.create(
+                    flight_id=flight,
+                    class_id=class_obj,
+                    seat_number=seat_number,
+                    price=total_price,
+                    status='PAID',
+                    passenger_id=passenger,
+                    payment_id=payment,
+                )
 
             # Создаем багаж, если выбран
             if baggage_type_id:

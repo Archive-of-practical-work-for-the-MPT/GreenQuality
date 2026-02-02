@@ -129,14 +129,24 @@ def main():
 
         conn = psycopg2.connect(**config)
 
-        if args.create or (do_all and not args.seed):
-            step = "[2/3]" if do_all else "[1/1]"
+        if args.create or do_all:
+            step = "[2/4]" if do_all else "[1/2]"
             print(f"\n{step} Создание таблиц (create_tables.sql)...")
             run_sql_file(conn, 'create_tables.sql', 'Таблицы созданы')
             conn.commit()
 
+        if args.create or do_all:
+            step = "[3/4]" if do_all else "[2/2]"
+            print(f"\n{step} Создание триггеров (triggers.sql)...")
+            run_sql_file(conn, 'triggers.sql', 'Триггеры созданы')
+            conn.commit()
+
         if args.seed or do_all:
-            step = "[3/3]" if do_all else "[1/1]"
+            if args.seed and not do_all:
+                print(f"\n[1/2] Создание триггеров (triggers.sql)...")
+                run_sql_file(conn, 'triggers.sql', 'Триггеры созданы')
+                conn.commit()
+            step = "[4/4]" if do_all else "[2/2]"
             print(f"\n{step} Заполнение начальными данными (insert_initial_data.sql)...")
             run_sql_file(conn, 'insert_initial_data.sql', 'Данные загружены')
             conn.commit()

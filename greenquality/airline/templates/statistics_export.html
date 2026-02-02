@@ -62,7 +62,7 @@
         <tbody>
             {% for status_info in ticket_statuses %}
             <tr>
-                <td>{% if status_info.status == 'BOOKED' %}Забронирован{% elif status_info.status == 'PAID' %}Оплачен{% elif status_info.status == 'CHECKED_IN' %}Зарегистрирован{% elif status_info.status == 'CANCELLED' %}Отменен{% else %}{{ status_info.status }}{% endif %}</td>
+                <td>{% if status_info.status == 'AVAILABLE' %}Свободен{% elif status_info.status == 'BOOKED' %}Забронирован{% elif status_info.status == 'PAID' %}Оплачен{% elif status_info.status == 'CHECKED_IN' %}Зарегистрирован{% elif status_info.status == 'CANCELLED' %}Отменен{% else %}{{ status_info.status }}{% endif %}</td>
                 <td>{{ status_info.count }}</td>
             </tr>
             {% endfor %}
