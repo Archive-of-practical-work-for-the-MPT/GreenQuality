@@ -12,6 +12,7 @@ from .models import (
     Airport, Class, BaggageType, Baggage, Airplane, AuditLog
 )
 from .exceptions_utils import get_user_friendly_message
+from .audit_utils import model_instance_to_audit_dict, get_record_id_for_audit, log_audit
 
 
 def admin_panel(request):
@@ -107,7 +108,7 @@ def admin_panel(request):
             'AuditLog': {
                 'model': AuditLog,
                 'name': 'Журнал аудита',
-                'fields': ['id_audit', 'table_name', 'record_id', 'operation', 'changed_by', 'changed_at'],
+                'fields': ['id_audit', 'table_name', 'record_id', 'operation', 'changed_by', 'changed_at', 'old_data', 'new_data'],
                 'readonly': True,  # Только просмотр
             },
         }
@@ -230,7 +231,10 @@ def admin_crud(request):
                 return redirect(f'/admin-panel/?table={table_name}')
             try:
                 obj = model.objects.get(pk=record_id)
+                old_data = model_instance_to_audit_dict(obj)
+                rid = get_record_id_for_audit(obj)
                 obj.delete()
+                log_audit(table_name, rid, 'DELETE', account_id, old_data=old_data, new_data=None)
                 messages.success(request, 'Запись успешно удалена')
             except model.DoesNotExist:
                 messages.error(request, 'Запись не найдена')
@@ -329,6 +333,9 @@ def admin_crud(request):
                 # Создаем новую запись
                 try:
                     obj = model.objects.create(**data)
+                    new_data = model_instance_to_audit_dict(obj)
+                    rid = get_record_id_for_audit(obj)
+                    log_audit(table_name, rid, 'INSERT', account_id, old_data=None, new_data=new_data)
                     messages.success(request, 'Запись успешно создана')
                 except Exception as e:
                     messages.error(request, get_user_friendly_message(e, 'create'))
@@ -339,9 +346,13 @@ def admin_crud(request):
                     return redirect(f'/admin-panel/?table={table_name}')
                 try:
                     obj = model.objects.get(pk=record_id)
+                    old_data = model_instance_to_audit_dict(obj)
                     for key, value in data.items():
                         setattr(obj, key, value)
                     obj.save()
+                    new_data = model_instance_to_audit_dict(obj)
+                    rid = get_record_id_for_audit(obj)
+                    log_audit(table_name, rid, 'UPDATE', account_id, old_data=old_data, new_data=new_data)
                     messages.success(request, 'Запись успешно обновлена')
                 except model.DoesNotExist:
                     messages.error(request, 'Запись не найдена')
@@ -629,7 +640,10 @@ def manager_crud(request):
                 return redirect('manager_panel')
             try:
                 obj = model.objects.get(pk=record_id)
+                old_data = model_instance_to_audit_dict(obj)
+                rid = get_record_id_for_audit(obj)
                 obj.delete()
+                log_audit(table_name, rid, 'DELETE', account_id, old_data=old_data, new_data=None)
                 messages.success(request, 'Запись успешно удалена')
             except model.DoesNotExist:
                 messages.error(request, 'Запись не найдена')
@@ -704,6 +718,9 @@ def manager_crud(request):
                 # Создаем новую запись
                 try:
                     obj = model.objects.create(**data)
+                    new_data = model_instance_to_audit_dict(obj)
+                    rid = get_record_id_for_audit(obj)
+                    log_audit(table_name, rid, 'INSERT', account_id, old_data=None, new_data=new_data)
                     messages.success(request, 'Запись успешно создана')
                 except Exception as e:
                     messages.error(request, get_user_friendly_message(e, 'create'))
@@ -714,9 +731,13 @@ def manager_crud(request):
                     return redirect(f'/manager-panel/?table={table_name}')
                 try:
                     obj = model.objects.get(pk=record_id)
+                    old_data = model_instance_to_audit_dict(obj)
                     for key, value in data.items():
                         setattr(obj, key, value)
                     obj.save()
+                    new_data = model_instance_to_audit_dict(obj)
+                    rid = get_record_id_for_audit(obj)
+                    log_audit(table_name, rid, 'UPDATE', account_id, old_data=old_data, new_data=new_data)
                     messages.success(request, 'Запись успешно обновлена')
                 except model.DoesNotExist:
                     messages.error(request, 'Запись не найдена')

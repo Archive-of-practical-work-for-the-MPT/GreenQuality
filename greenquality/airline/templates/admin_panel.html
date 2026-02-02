@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load audit_filters %}
 
 {% block title %}Панель администратора - GreenQuality Airlines{% endblock %}
 
@@ -216,6 +217,12 @@
                                                 {{ obj.get_operation_display }}
                                             {% elif field == "changed_at" %}
                                                 {{ obj.changed_at|date:"d.m.Y H:i" }}
+                                            {% elif field == "changed_by" %}
+                                                {{ obj.changed_by|default:"—" }}
+                                            {% elif field == "old_data" %}
+                                                {{ obj.old_data|json_pretty }}
+                                            {% elif field == "new_data" %}
+                                                {{ obj.new_data|json_pretty }}
                                             {% else %}
                                                 -
                                             {% endif %}
@@ -637,6 +644,22 @@
 .btn-save:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(11, 218, 81, 0.3);
+}
+.audit-json {
+    margin: 0;
+    font-size: 11px;
+    max-width: 280px;
+    max-height: 120px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    background: var(--bg-secondary, #f5f5f5);
+    color: var(--text-color, #2c3e50);
+    padding: 6px 8px;
+    border-radius: 4px;
+}
+.audit-empty {
+    color: var(--text-muted, #999);
 }
 </style>
 
