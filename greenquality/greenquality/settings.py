@@ -30,7 +30,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get(
+    'ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -54,7 +55,8 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'airline.middleware.Custom404Middleware',  # подмена любой 404 на нашу страницу (работает при DEBUG=True)
+    # подмена любой 404 на нашу страницу (работает при DEBUG=True)
+    'airline.middleware.Custom404Middleware',
 ]
 
 ROOT_URLCONF = 'greenquality.urls'
@@ -147,7 +149,8 @@ REST_FRAMEWORK = {
     # Используем JSON по умолчанию для API
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',  # Для удобного просмотра API в браузере
+        # Для удобного просмотра API в браузере
+        'rest_framework.renderers.BrowsableAPIRenderer',
     ],
     # Парсеры для обработки входящих данных
     'DEFAULT_PARSER_CLASSES': [
@@ -158,8 +161,9 @@ REST_FRAMEWORK = {
     # Пагинация (разбиение на страницы)
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
-    # Разрешения по умолчанию (можно настроить аутентификацию позже)
+    # Разрешения: только авторизованные администраторы
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',  # Позволяет всем доступ (для разработки)
+        # 'rest_framework.permissions.AllowAny', Позволяет всем доступ (для разработки)
+        'airline.api_permissions.IsAdminUser',
     ],
 }
