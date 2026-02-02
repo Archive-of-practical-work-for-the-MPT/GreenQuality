@@ -138,8 +138,20 @@ def admin_panel(request):
         elif selected_table == 'AuditLog':
             objects = objects.select_related('changed_by')
         
-        # Сортируем по первичному ключу
-        objects = objects.order_by('-pk')[:100]  # Ограничиваем 100 записями для производительности
+        # Сортировка по столбцу (из GET: sort_by, order=asc/desc)
+        sort_by = request.GET.get('sort_by', '').strip()
+        sort_order = request.GET.get('order', 'asc').lower()
+        if sort_order not in ('asc', 'desc'):
+            sort_order = 'asc'
+        if sort_by and sort_by in model_info['fields']:
+            order_field = sort_by if sort_order == 'asc' else f'-{sort_by}'
+            objects = objects.order_by(order_field)
+        else:
+            sort_by = ''
+            sort_order = 'asc'
+            objects = objects.order_by('-pk')
+        
+        objects = objects[:100]  # Ограничиваем 100 записями для производительности
         
         # Удаляем сообщения об успешном входе из панели
         storage = get_messages(request)
@@ -154,7 +166,9 @@ def admin_panel(request):
             'model_info': model_info,
             'objects': objects,
             'fields': model_info['fields'],
-            'panel_type': 'admin',  # Тип панели для выбора правильных URL
+            'panel_type': 'admin',
+            'sort_by': sort_by,
+            'sort_order': sort_order,
         }
         
         return render(request, 'admin_panel.html', context)
@@ -530,8 +544,20 @@ def manager_panel(request):
         elif selected_table == 'Baggage':
             objects = objects.select_related('ticket_id', 'baggage_type_id')
         
-        # Сортируем по первичному ключу
-        objects = objects.order_by('-pk')[:100]  # Ограничиваем 100 записями для производительности
+        # Сортировка по столбцу (из GET: sort_by, order=asc/desc)
+        sort_by = request.GET.get('sort_by', '').strip()
+        sort_order = request.GET.get('order', 'asc').lower()
+        if sort_order not in ('asc', 'desc'):
+            sort_order = 'asc'
+        if sort_by and sort_by in model_info['fields']:
+            order_field = sort_by if sort_order == 'asc' else f'-{sort_by}'
+            objects = objects.order_by(order_field)
+        else:
+            sort_by = ''
+            sort_order = 'asc'
+            objects = objects.order_by('-pk')
+        
+        objects = objects[:100]  # Ограничиваем 100 записями для производительности
         
         # Удаляем сообщения об успешном входе из панели
         storage = get_messages(request)
@@ -546,7 +572,9 @@ def manager_panel(request):
             'model_info': model_info,
             'objects': objects,
             'fields': model_info['fields'],
-            'panel_type': 'manager',  # Тип панели для выбора правильных URL
+            'panel_type': 'manager',
+            'sort_by': sort_by,
+            'sort_order': sort_order,
         }
         
         return render(request, 'admin_panel.html', context)

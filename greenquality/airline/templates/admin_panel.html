@@ -52,7 +52,18 @@
                     <thead>
                         <tr>
                             {% for field in fields %}
-                                <th>{{ field }}</th>
+                                <th class="sortable-th">
+                                    {% if panel_type == 'admin' %}
+                                        <a href="{% url 'admin_panel' %}?table={{ selected_table }}&sort_by={{ field }}&order={% if sort_by == field and sort_order == 'asc' %}desc{% else %}asc{% endif %}" class="th-sort-link">
+                                    {% else %}
+                                        <a href="{% url 'manager_panel' %}?table={{ selected_table }}&sort_by={{ field }}&order={% if sort_by == field and sort_order == 'asc' %}desc{% else %}asc{% endif %}" class="th-sort-link">
+                                    {% endif %}
+                                            {{ field }}
+                                            {% if sort_by == field %}
+                                                <span class="sort-arrow" aria-hidden="true">{% if sort_order == 'asc' %} ↑{% else %} ↓{% endif %}</span>
+                                            {% endif %}
+                                        </a>
+                                </th>
                             {% endfor %}
                             {% if not model_info.readonly %}
                                 <th>Действия</th>
@@ -433,6 +444,24 @@
     font-weight: 700;
     color: var(--text-secondary, #2c3e50);
     border-bottom: 2px solid #0bda51;
+}
+
+.sortable-th .th-sort-link {
+    color: inherit;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+.sortable-th .th-sort-link:hover {
+    color: #0bda51;
+}
+
+.sort-arrow {
+    font-weight: 700;
+    color: #0bda51;
 }
 
 .admin-table td {
