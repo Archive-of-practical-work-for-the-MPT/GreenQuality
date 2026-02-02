@@ -10,22 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+from dotenv import load_dotenv
+
+# Путь к .env: корень репозитория (родитель папки с manage.py)
 BASE_DIR = Path(__file__).resolve().parent.parent
+ENV_PATH = BASE_DIR.parent / '.env'
+load_dotenv(ENV_PATH)
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ugjxr3-bd_p!-bfv@$jjb3qs+q6&l@0d**sklry7(ug^o(0ckg'
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-change-me')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() in ('true', '1', 'yes')
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 
 # Application definition
@@ -49,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'airline.middleware.Custom404Middleware',  # подмена любой 404 на нашу страницу (работает при DEBUG=True)
 ]
 
 ROOT_URLCONF = 'greenquality.urls'
@@ -75,15 +81,15 @@ WSGI_APPLICATION = 'greenquality.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Настройки подключения к локальной базе данных PostgreSQL
+# Настройки подключения к базе данных PostgreSQL (из .env)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'greenquality',  # Название базы данных
-        'USER': 'postgres',  # Имя пользователя (обычно postgres по умолчанию)
-        'PASSWORD': '1234',  # Пароль от базы данных
-        'HOST': 'localhost',  # Хост базы данных
-        'PORT': '5432',  # Порт PostgreSQL (по умолчанию 5432)
+        'ENGINE': os.environ.get('DB_ENGINE', 'django.db.backends.postgresql'),
+        'NAME': os.environ.get('DB_NAME', 'greenquality'),
+        'USER': os.environ.get('DB_USER', 'postgres'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 

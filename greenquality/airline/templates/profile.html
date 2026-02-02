@@ -53,6 +53,11 @@
                             <span class="stat-value">{{ total_airplanes }}</span>
                             <span class="stat-label">Самолетов</span>
                         </div>
+                    {% elif is_manager %}
+                        <div class="stat-item">
+                            <span class="stat-value">{{ total_tickets }}</span>
+                            <span class="stat-label">Билетов</span>
+                        </div>
                     {% else %}
                         <div class="stat-item">
                             <span class="stat-value">{{ total_tickets }}</span>
@@ -74,6 +79,15 @@
                     Личная информация
                 </button>
                 {% if is_admin %}
+                    <button class="tab-button" onclick="switchTab('statistics', event)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="20" x2="18" y2="10"></line>
+                            <line x1="12" y1="20" x2="12" y2="4"></line>
+                            <line x1="6" y1="20" x2="6" y2="14"></line>
+                        </svg>
+                        Статистика
+                    </button>
+                {% elif is_manager %}
                     <button class="tab-button" onclick="switchTab('statistics', event)">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -324,6 +338,50 @@
                         {% endif %}
                     </div>
                 </div>
+            {% elif is_manager %}
+                <!-- Вкладка: Статистика (для менеджера) -->
+                <div id="tab-statistics" class="tab-content" style="display: none;">
+                    <div class="content-card">
+                        <div class="statistics-header">
+                            <h3 class="content-title">Статистика</h3>
+                            <div class="export-buttons">
+                                <a href="{% url 'export_statistics' 'csv' %}" class="export-btn export-csv">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="7 10 12 15 17 10"></polyline>
+                                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                                    </svg>
+                                    Экспорт CSV
+                                </a>
+                                <a href="{% url 'export_statistics' 'pdf' %}" class="export-btn export-pdf">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                    Экспорт PDF
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Круговая диаграмма статусов билетов -->
+                        <div class="statistics-section">
+                            <h4 class="section-title">Статусы билетов</h4>
+                            <div class="chart-container">
+                                <canvas id="ticketStatusChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Bar диаграмма выручки по месяцам -->
+                        <div class="statistics-section">
+                            <h4 class="section-title">Выручка по месяцам</h4>
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             {% else %}
                 <!-- Вкладка: История покупок (для обычных пользователей) -->
                 <div id="tab-tickets" class="tab-content">
@@ -424,7 +482,8 @@
 .profile-container {
     min-height: calc(100vh - 200px);
     padding: 40px 20px;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    transition: background 0.3s ease;
 }
 
 .messages-container {
@@ -467,11 +526,12 @@
 }
 
 .profile-card {
-    background: white;
+    background: var(--bg-color, white);
     border-radius: 20px;
     padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px var(--shadow-color, rgba(0, 0, 0, 0.1));
     text-align: center;
+    transition: background 0.3s ease;
 }
 
 .profile-avatar {
@@ -497,27 +557,27 @@
 }
 
 .profile-name {
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-size: 24px;
     margin-bottom: 8px;
     font-weight: 700;
 }
 
 .profile-email {
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     font-size: 14px;
     margin-bottom: 5px;
 }
 
 .profile-phone {
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     font-size: 14px;
 }
 
 .profile-stats {
     margin-top: 25px;
     padding-top: 25px;
-    border-top: 1px solid #e1e8ed;
+    border-top: 1px solid var(--border-color, #e1e8ed);
 }
 
 .stat-item {
@@ -534,21 +594,23 @@
 }
 
 .stat-label {
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     font-size: 14px;
 }
 
 .profile-main {
-    background: white;
+    background: var(--bg-color, white);
     border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px var(--shadow-color, rgba(0, 0, 0, 0.1));
     overflow: hidden;
+    transition: background 0.3s ease;
 }
 
 .profile-tabs {
     display: flex;
-    border-bottom: 2px solid #e1e8ed;
-    background: #f8f9fa;
+    border-bottom: 2px solid var(--border-color, #e1e8ed);
+    background: var(--bg-secondary, #f8f9fa);
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .tab-button {
@@ -559,7 +621,7 @@
     cursor: pointer;
     font-size: 16px;
     font-weight: 600;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -575,7 +637,7 @@
 
 .tab-button.active {
     color: #0bda51;
-    background: white;
+    background: var(--bg-color, white);
 }
 
 .tab-button.active::after {
@@ -603,7 +665,7 @@
 }
 
 .content-title {
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-size: 28px;
     margin-bottom: 30px;
     font-weight: 700;
@@ -629,16 +691,18 @@
 .form-group label {
     margin-bottom: 8px;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-size: 14px;
 }
 
 .form-group input {
     padding: 15px;
-    border: 2px solid #e1e8ed;
+    border: 2px solid var(--border-color, #e1e8ed);
     border-radius: 12px;
     font-size: 16px;
     transition: all 0.3s ease;
+    background: var(--bg-color, white);
+    color: var(--text-color, #2c3e50);
 }
 
 .form-group input:focus {
@@ -649,7 +713,7 @@
 
 .submit-btn {
     background: linear-gradient(135deg, #0bda51, #08a53d);
-    color: white;
+    color: #ffffff;
     border: none;
     padding: 15px 40px;
     border-radius: 12px;
@@ -674,10 +738,10 @@
 }
 
 .ticket-card {
-    background: #f8f9fa;
+    background: var(--bg-secondary, #f8f9fa);
     border-radius: 16px;
     padding: 25px;
-    border: 2px solid #e1e8ed;
+    border: 2px solid var(--border-color, #e1e8ed);
     transition: all 0.3s ease;
 }
 
@@ -693,7 +757,7 @@
     align-items: center;
     margin-bottom: 20px;
     padding-bottom: 20px;
-    border-bottom: 2px solid #e1e8ed;
+    border-bottom: 2px solid var(--border-color, #e1e8ed);
 }
 
 .ticket-route {
@@ -717,7 +781,7 @@
 
 .airport-name {
     font-size: 14px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
 }
 
 .route-arrow {
@@ -770,7 +834,7 @@
 
 .info-label {
     font-size: 12px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     margin-bottom: 5px;
     text-transform: uppercase;
     font-weight: 600;
@@ -778,7 +842,7 @@
 
 .info-value {
     font-size: 16px;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-weight: 600;
 }
 
@@ -788,7 +852,7 @@
     align-items: center;
     margin-top: 15px;
     padding-top: 15px;
-    border-top: 1px solid #e1e8ed;
+    border-top: 1px solid var(--border-color, #e1e8ed);
 }
 
 .ticket-price {
@@ -798,7 +862,7 @@
 
 .price-label {
     font-size: 12px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     margin-bottom: 5px;
 }
 
@@ -817,28 +881,28 @@
 
 .payment-date {
     font-size: 14px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
 }
 
 .payment-method {
     font-size: 14px;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     font-weight: 600;
 }
 
 .empty-state {
     text-align: center;
     padding: 60px 20px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
 }
 
 .empty-state svg {
     margin-bottom: 20px;
-    color: #bdc3c7;
+    color: var(--text-muted, #bdc3c7);
 }
 
 .empty-state h3 {
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     margin-bottom: 10px;
     font-size: 24px;
 }
@@ -903,10 +967,74 @@
     margin-bottom: 40px;
 }
 
+.statistics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color, #e1e8ed);
+}
+
+.export-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 2px solid;
+}
+
+.export-csv {
+    background: #3498db;
+    color: white;
+    border-color: #3498db;
+}
+
+.export-csv:hover {
+    background: #2980b9;
+    border-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+}
+
+.export-pdf {
+    background: #e74c3c;
+    color: white;
+    border-color: #e74c3c;
+}
+
+.export-pdf:hover {
+    background: #c0392b;
+    border-color: #c0392b;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.3);
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    margin-top: 20px;
+    padding: 20px;
+    background: var(--bg-color, white);
+    border-radius: 15px;
+    box-shadow: 0 2px 10px var(--shadow-color, rgba(0, 0, 0, 0.05));
+    transition: background 0.3s ease;
+}
+
 .section-title {
     font-size: 20px;
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     margin-bottom: 20px;
     padding-bottom: 10px;
     border-bottom: 2px solid #0bda51;
@@ -919,8 +1047,8 @@
 }
 
 .stat-card {
-    background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
-    border: 2px solid #e1e8ed;
+    background: linear-gradient(135deg, var(--bg-secondary, #f8f9fa) 0%, var(--bg-color, #ffffff) 100%);
+    border: 2px solid var(--border-color, #e1e8ed);
     border-radius: 15px;
     padding: 20px;
     display: flex;
@@ -954,13 +1082,13 @@
 .stat-number {
     font-size: 28px;
     font-weight: 700;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
     margin-bottom: 5px;
 }
 
 .stat-description {
     font-size: 14px;
-    color: #7f8c8d;
+    color: var(--text-muted, #7f8c8d);
     line-height: 1.4;
 }
 
@@ -971,8 +1099,8 @@
 }
 
 .route-item {
-    background: #f8f9fa;
-    border: 2px solid #e1e8ed;
+    background: var(--bg-secondary, #f8f9fa);
+    border: 2px solid var(--border-color, #e1e8ed);
     border-radius: 10px;
     padding: 15px 20px;
     display: flex;
@@ -983,13 +1111,13 @@
 
 .route-item:hover {
     border-color: #0bda51;
-    background: #f0fff4;
+    background: var(--bg-secondary, #f0fff4);
 }
 
 .route-path {
     font-size: 16px;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-secondary, #2c3e50);
 }
 
 .route-count {
@@ -1083,5 +1211,115 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+{% if is_manager %}
+// Инициализация диаграмм для менеджера
+document.addEventListener('DOMContentLoaded', function() {
+    // Данные для круговой диаграммы статусов билетов
+    const ticketStatusData = {{ ticket_status_data|safe }};
+    const revenueData = {{ revenue_data|safe }};
+    
+    // Круговая диаграмма статусов билетов
+    const ticketStatusCtx = document.getElementById('ticketStatusChart');
+    if (ticketStatusCtx) {
+        new Chart(ticketStatusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ticketStatusData.labels,
+                datasets: [{
+                    data: ticketStatusData.data,
+                    backgroundColor: ticketStatusData.colors,
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'right',
+                        labels: {
+                            padding: 15,
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = ((value / total) * 100).toFixed(1);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Bar диаграмма выручки по месяцам
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: revenueData.labels,
+                datasets: [{
+                    label: 'Выручка (руб.)',
+                    data: revenueData.data,
+                    backgroundColor: 'rgba(11, 218, 81, 0.8)',
+                    borderColor: 'rgba(11, 218, 81, 1)',
+                    borderWidth: 2,
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return 'Выручка: ' + context.parsed.y.toLocaleString('ru-RU') + ' ₽';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('ru-RU') + ' ₽';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+{% endif %}
 </script>
+
+{% if is_manager %}
+<!-- Chart.js библиотека -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endif %}
 {% endblock %}

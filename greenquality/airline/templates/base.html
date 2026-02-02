@@ -27,12 +27,19 @@
                         <li><a href="{% url 'profile' %}">Профиль</a></li>
                         {% if is_admin %}
                             <li><a href="{% url 'admin_panel' %}">Панель</a></li>
+                        {% elif is_manager %}
+                            <li><a href="{% url 'manager_panel' %}">Панель</a></li>
                         {% endif %}
                         <li><a href="{% url 'logout' %}">Выход</a></li>
                     {% else %}
                         <li><a href="{% url 'login' %}">Вход</a></li>
                         <li><a href="{% url 'register' %}">Регистрация</a></li>
                     {% endif %}
+                    <li>
+                        <button class="theme-toggle" id="themeToggle" aria-label="Переключить тему">
+                            <span class="theme-toggle-icon" id="themeIcon">🌙</span>
+                        </button>
+                    </li>
                 </ul>
             </nav>
         </div>
@@ -120,7 +127,178 @@
                 });
             });
         });
+        
+        // Переключение темы
+        (function() {
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const html = document.documentElement;
+            
+            // Загружаем сохраненную тему из localStorage
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            if (savedTheme === 'dark') {
+                html.setAttribute('data-theme', 'dark');
+                themeIcon.textContent = '☀️';
+            } else {
+                html.setAttribute('data-theme', 'light');
+                themeIcon.textContent = '🌙';
+            }
+            
+            // Обработчик переключения темы
+            themeToggle.addEventListener('click', function() {
+                const currentTheme = html.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                
+                html.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                
+                // Обновляем иконку
+                themeIcon.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+            });
+        })();
+
+        // Глобальные горячие клавиши
+        (function() {
+            window.APP_URLS = {
+                index: "{% url 'index' %}",
+                about: "{% url 'about' %}",
+                flights: "{% url 'flights' %}",
+                contacts: "{% url 'contacts' %}",
+                profile: "{% url 'profile' %}",
+                admin_panel: "{% url 'admin_panel' %}",
+                manager_panel: "{% url 'manager_panel' %}",
+                export_csv: "{% url 'export_statistics' 'csv' %}",
+                export_pdf: "{% url 'export_statistics' 'pdf' %}",
+                login: "{% url 'login' %}",
+                logout: "{% url 'logout' %}"
+            };
+            window.APP_USER = {
+                is_authenticated: {{ is_authenticated|yesno:"true,false" }},
+                is_admin: {{ is_admin|yesno:"true,false" }},
+                is_manager: {{ is_manager|yesno:"true,false" }}
+            };
+
+            document.addEventListener('keydown', function(e) {
+                // Игнорируем, если фокус в поле ввода (кроме Escape и F1)
+                const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+                const inInput = tag === 'input' || tag === 'textarea' || tag === 'select';
+                if (inInput && e.key !== 'Escape' && e.key !== 'F1') return;
+
+                const ctrl = e.ctrlKey;
+                const shift = e.shiftKey;
+                const alt = e.altKey;
+                const key = e.key.toUpperCase();
+
+                // F1 — подсказка по горячим клавишам; Escape — закрыть подсказку
+                if (e.key === 'F1') {
+                    e.preventDefault();
+                    var hint = document.getElementById('hotkeys-hint');
+                    if (hint) hint.classList.toggle('hotkeys-hint-visible');
+                    return;
+                }
+                if (e.key === 'Escape') {
+                    var hint = document.getElementById('hotkeys-hint');
+                    if (hint) hint.classList.remove('hotkeys-hint-visible');
+                    return;
+                }
+
+                // Ctrl+Shift+O — переключение темы
+                if (ctrl && shift && key === 'O') {
+                    e.preventDefault();
+                    document.getElementById('themeToggle') && document.getElementById('themeToggle').click();
+                    return;
+                }
+
+                // Ctrl+Shift+H — главная
+                if (ctrl && shift && key === 'H') {
+                    e.preventDefault();
+                    window.location.href = APP_URLS.index;
+                    return;
+                }
+
+                // Ctrl+Shift+F — рейсы
+                if (ctrl && shift && key === 'F') {
+                    e.preventDefault();
+                    window.location.href = APP_URLS.flights;
+                    return;
+                }
+
+                // Ctrl+Shift+P — профиль (если авторизован)
+                if (ctrl && shift && key === 'P') {
+                    e.preventDefault();
+                    if (APP_USER.is_authenticated) {
+                        window.location.href = APP_URLS.profile;
+                    }
+                    return;
+                }
+
+                // Ctrl+Shift+A — админ-панель (только для админов)
+                if (ctrl && shift && key === 'A') {
+                    e.preventDefault();
+                    if (APP_USER.is_admin) {
+                        window.location.href = APP_URLS.admin_panel;
+                    }
+                    return;
+                }
+
+                // Ctrl+Shift+M — панель менеджера (только для менеджеров)
+                if (ctrl && shift && key === 'M') {
+                    e.preventDefault();
+                    if (APP_USER.is_manager) {
+                        window.location.href = APP_URLS.manager_panel;
+                    }
+                    return;
+                }
+
+                // Ctrl+Shift+E — экспорт CSV (только для менеджеров)
+                if (ctrl && shift && key === 'E') {
+                    e.preventDefault();
+                    if (APP_USER.is_manager) {
+                        window.location.href = APP_URLS.export_csv;
+                    }
+                    return;
+                }
+
+                // Ctrl+Shift+L — выход (если авторизован)
+                if (ctrl && shift && key === 'L') {
+                    e.preventDefault();
+                    if (APP_USER.is_authenticated) {
+                        window.location.href = APP_URLS.logout;
+                    }
+                    return;
+                }
+            });
+        })();
     </script>
+    <!-- Подсказка по горячим клавишам (F1) -->
+    <div id="hotkeys-hint" class="hotkeys-hint" aria-hidden="true" onclick="if(event.target===this) this.classList.remove('hotkeys-hint-visible')">
+        <div class="hotkeys-hint-content" onclick="event.stopPropagation()">
+            <button type="button" class="hotkeys-hint-close" onclick="document.getElementById('hotkeys-hint').classList.remove('hotkeys-hint-visible')" aria-label="Закрыть">×</button>
+            <h3>Горячие клавиши</h3>
+            <ul class="hotkeys-list">
+                <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>H</kbd> — Главная</li>
+                <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd> — Рейсы</li>
+                <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd> — Профиль</li>
+                <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> — Админ-панель</li>
+                <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>M</kbd> — Панель менеджера</li>
+                <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd> — Экспорт (CSV, для менеджеров)</li>
+                <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd> — Выход</li>
+                <li><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd> — Тема (светлая/тёмная)</li>
+                <li><kbd>F1</kbd> — эта подсказка</li>
+            </ul>
+        </div>
+    </div>
+    <style>
+        .hotkeys-hint { position: fixed; inset: 0; z-index: 9999; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); opacity: 0; visibility: hidden; transition: opacity 0.2s, visibility 0.2s; }
+        .hotkeys-hint.hotkeys-hint-visible { opacity: 1; visibility: visible; }
+        .hotkeys-hint-content { background: var(--bg-color, #fff); border-radius: 16px; padding: 24px 32px; max-width: 400px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); position: relative; }
+        .hotkeys-hint-close { position: absolute; top: 12px; right: 16px; background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-muted, #666); line-height: 1; }
+        .hotkeys-hint-close:hover { color: var(--text-secondary, #333); }
+        .hotkeys-hint h3 { margin: 0 0 16px 0; color: var(--text-secondary, #2c3e50); font-size: 20px; }
+        .hotkeys-list { list-style: none; padding: 0; margin: 0; }
+        .hotkeys-list li { padding: 6px 0; color: var(--text-secondary, #2c3e50); font-size: 14px; }
+        .hotkeys-list kbd { display: inline-block; padding: 2px 8px; background: var(--bg-secondary, #f0f0f0); border-radius: 6px; font-family: inherit; font-size: 12px; margin: 0 2px; }
+    </style>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

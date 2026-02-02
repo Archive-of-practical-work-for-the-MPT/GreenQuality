@@ -83,16 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Добавляем интерактивность для таблицы
     function addTableRowInteractivity() {
-        var tableRows = document.querySelectorAll('.flights-table tbody tr');
-        tableRows.forEach(function(row) {
-            row.addEventListener('mouseenter', function() {
-                this.style.backgroundColor = '#f0f8ff';
-            });
-            
-            row.addEventListener('mouseleave', function() {
-                this.style.backgroundColor = '';
-            });
-        });
+        // Интерактивность теперь управляется через CSS :hover
+        // Удаляем JavaScript обработчики, чтобы не переопределять CSS стили
     }
     addTableRowInteractivity();
     

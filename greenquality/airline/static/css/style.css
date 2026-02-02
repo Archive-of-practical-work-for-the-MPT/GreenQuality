@@ -5,11 +5,42 @@
     box-sizing: border-box;
 }
 
+/* CSS переменные для светлой темы */
+:root {
+    --bg-color: #ffffff;
+    --bg-secondary: #f8f9fa;
+    --bg-gradient-start: #f5f7fa;
+    --bg-gradient-end: #e4edf5;
+    --text-color: #333;
+    --text-secondary: #2c3e50;
+    --text-muted: #7f8c8d;
+    --border-color: #e1e8ed;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --header-bg: rgba(255, 255, 255, 0.25);
+    --header-border: rgba(255, 255, 255, 0.18);
+}
+
+/* CSS переменные для темной темы */
+[data-theme="dark"] {
+    --bg-color: #1c1c1c;
+    --bg-secondary: #2a2a2a;
+    --bg-gradient-start: #1c1c1c;
+    --bg-gradient-end: #2a2a2a;
+    --text-color: #ffffff;
+    --text-secondary: #ffffff;
+    --text-muted: #bdc3c7;
+    --border-color: #3a3a3a;
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --header-bg: rgba(28, 28, 28, 0.8);
+    --header-border: rgba(255, 255, 255, 0.1);
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
-    color: #333;
+    background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+    color: var(--text-color);
     line-height: 1.6;
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .container {
@@ -20,16 +51,17 @@ body {
 
 /* Шапка с эффектом мутного стекла */
 .header {
-    background: rgba(255, 255, 255, 0.25);
+    background: var(--header-bg);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+    border: 1px solid var(--header-border);
+    box-shadow: 0 8px 32px 0 var(--shadow-color);
     border-radius: 20px;
     margin: 20px auto;
     padding: 15px 30px;
     width: 90%;
     max-width: 1400px;
+    transition: background 0.3s ease, border-color 0.3s ease;
 }
 
 .header .container {
@@ -62,7 +94,7 @@ body {
 }
 
 .navigation ul li a {
-    color: #2c3e50;
+    color: var(--text-secondary);
     text-decoration: none;
     font-weight: 600;
     font-size: 16px;
@@ -107,19 +139,19 @@ body {
 }
 
 .btn-outline {
-    color: #ffffff;
-    border-color: #ffffff;
+    color: var(--text-color);
+    border-color: var(--text-color);
     background: transparent;
 }
 
 .btn-outline:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-secondary);
     transform: translateY(-2px);
 }
 
 .btn-primary {
     background: linear-gradient(135deg, #00c853, #009624);
-    color: white;
+    color: var(--text-color);
     box-shadow: 0 4px 15px rgba(0, 200, 83, 0.3);
 }
 
@@ -167,7 +199,7 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    color: white;
+    color: #ffffff;
     background: rgba(0, 0, 0, 0.5);
     padding: 30px;
     border-radius: 15px;
@@ -177,12 +209,14 @@ body {
 .carousel-caption h2 {
     font-size: 48px;
     margin-bottom: 20px;
+    color: #ffffff;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .carousel-caption p {
     font-size: 22px;
     margin-bottom: 30px;
+    color: #ffffff;
     text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
 }
 
@@ -195,7 +229,7 @@ body {
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    color: white;
+    color: var(--text-color);
     font-size: 24px;
     cursor: pointer;
     transition: background 0.3s ease;
@@ -232,21 +266,22 @@ body {
 }
 
 .indicator.active {
-    background: white;
+    background: var(--text-color);
 }
 
 /* Поиск билетов */
 .search-section {
-    background: white;
+    background: var(--bg-color);
     border-radius: 20px;
     padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px var(--shadow-color);
     margin-bottom: 40px;
+    transition: background 0.3s ease;
 }
 
 .search-section h2 {
     text-align: center;
-    color: #2c3e50;
+    color: var(--text-secondary);
     margin-bottom: 25px;
     font-size: 32px;
 }
@@ -266,16 +301,18 @@ body {
 .form-group label {
     margin-bottom: 8px;
     font-weight: 600;
-    color: #2c3e50;
+    color: var(--text-secondary);
 }
 
 .form-group input,
 .form-group select {
     padding: 15px;
-    border: 2px solid #e1e8ed;
+    border: 2px solid var(--border-color);
     border-radius: 12px;
     font-size: 16px;
     transition: border-color 0.3s ease;
+    background: var(--bg-color);
+    color: var(--text-color);
 }
 
 .form-group input:focus,
@@ -287,7 +324,7 @@ body {
 
 .search-btn {
     background: linear-gradient(45deg, #0bda51, #08a53d);
-    color: white;
+    color: #ffffff;
     border: none;
     padding: 15px;
     border-radius: 12px;
@@ -307,7 +344,7 @@ body {
 /* Секции с контентом */
 .section-title {
     text-align: center;
-    color: #2c3e50;
+    color: var(--text-secondary);
     margin: 50px 0 30px;
     font-size: 36px;
     position: relative;
@@ -337,11 +374,11 @@ body {
 .offer-card,
 .schedule-card,
 .news-card {
-    background: white;
+    background: var(--bg-color);
     border-radius: 20px;
     overflow: hidden;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 5px 15px var(--shadow-color);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
 }
 
 .offer-card:hover,
@@ -362,13 +399,13 @@ body {
 }
 
 .card-content h3 {
-    color: #2c3e50;
+    color: var(--text-secondary);
     margin-bottom: 15px;
     font-size: 22px;
 }
 
 .card-content p {
-    color: #7f8c8d;
+    color: var(--text-muted);
     margin-bottom: 20px;
     line-height: 1.7;
 }
@@ -391,7 +428,7 @@ body {
     border-radius: 20px;
     padding: 50px;
     text-align: center;
-    color: white;
+    color: #ffffff;
     margin-bottom: 40px;
     box-shadow: 0 10px 30px rgba(11, 218, 81, 0.3);
 }
@@ -399,6 +436,7 @@ body {
 .bonus-program h2 {
     font-size: 36px;
     margin-bottom: 20px;
+    color: #ffffff;
 }
 
 .bonus-program p {
@@ -407,10 +445,11 @@ body {
     max-width: 700px;
     margin-left: auto;
     margin-right: auto;
+    color: #ffffff;
 }
 
 .bonus-btn {
-    background: white;
+    background: var(--bg-color);
     color: #0bda51;
     border: none;
     padding: 15px 40px;
@@ -418,7 +457,7 @@ body {
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease, color 0.3s ease;
 }
 
 .bonus-btn:hover {
@@ -432,11 +471,12 @@ body {
 }
 
 .faq-item {
-    background: white;
+    background: var(--bg-color);
     border-radius: 15px;
     margin-bottom: 15px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 3px 10px var(--shadow-color);
     overflow: hidden;
+    transition: background 0.3s ease;
 }
 
 .faq-question {
@@ -447,12 +487,12 @@ body {
     align-items: center;
     font-weight: 600;
     font-size: 18px;
-    color: #2c3e50;
+    color: var(--text-secondary);
     transition: background 0.3s ease;
 }
 
 .faq-question:hover {
-    background: #f8f9fa;
+    background: var(--bg-secondary);
 }
 
 .faq-question::after {
@@ -469,7 +509,7 @@ body {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease, padding 0.3s ease;
-    color: #7f8c8d;
+    color: var(--text-muted);
     line-height: 1.7;
 }
 
@@ -561,6 +601,36 @@ body {
     padding-top: 30px;
     text-align: center;
     color: #95a5a6;
+}
+
+/* Переключатель темы */
+.theme-toggle {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 5px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    transition: all 0.2s ease;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+}
+
+.theme-toggle:hover {
+    background: var(--bg-secondary);
+    opacity: 0.8;
+}
+
+.theme-toggle-icon {
+    font-size: 18px;
+    line-height: 1;
 }
 
 /* Адаптивность */
