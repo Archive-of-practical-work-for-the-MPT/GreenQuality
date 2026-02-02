@@ -1,6 +1,7 @@
 """Функции для панели администратора"""
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.contrib.messages import get_messages
 from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password
@@ -153,7 +154,25 @@ def admin_panel(request):
             sort_order = 'asc'
             objects = objects.order_by('-pk')
         
-        objects = objects[:100]  # Ограничиваем 100 записями для производительности
+        # Пагинация: 10 записей на странице
+        paginator = Paginator(objects, 10)
+        page_num = request.GET.get('page', 1)
+        try:
+            page_obj = paginator.page(page_num)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+        
+        # Диапазон страниц для отображения (макс. 10)
+        num_pages = paginator.num_pages
+        current = page_obj.number
+        if num_pages <= 10:
+            page_range_display = list(range(1, num_pages + 1))
+        else:
+            start = max(1, min(current - 4, num_pages - 9))
+            end = min(num_pages, start + 9)
+            page_range_display = list(range(start, end + 1))
         
         # Удаляем сообщения об успешном входе из панели
         storage = get_messages(request)
@@ -166,7 +185,9 @@ def admin_panel(request):
             'models_info': models_info,
             'selected_table': selected_table,
             'model_info': model_info,
-            'objects': objects,
+            'objects': page_obj.object_list,
+            'page_obj': page_obj,
+            'page_range_display': page_range_display,
             'fields': model_info['fields'],
             'panel_type': 'admin',
             'sort_by': sort_by,
@@ -565,7 +586,25 @@ def manager_panel(request):
             sort_order = 'asc'
             objects = objects.order_by('-pk')
         
-        objects = objects[:100]  # Ограничиваем 100 записями для производительности
+        # Пагинация: 10 записей на странице
+        paginator = Paginator(objects, 10)
+        page_num = request.GET.get('page', 1)
+        try:
+            page_obj = paginator.page(page_num)
+        except PageNotAnInteger:
+            page_obj = paginator.page(1)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages)
+        
+        # Диапазон страниц для отображения (макс. 10)
+        num_pages = paginator.num_pages
+        current = page_obj.number
+        if num_pages <= 10:
+            page_range_display = list(range(1, num_pages + 1))
+        else:
+            start = max(1, min(current - 4, num_pages - 9))
+            end = min(num_pages, start + 9)
+            page_range_display = list(range(start, end + 1))
         
         # Удаляем сообщения об успешном входе из панели
         storage = get_messages(request)
@@ -578,7 +617,9 @@ def manager_panel(request):
             'models_info': models_info,
             'selected_table': selected_table,
             'model_info': model_info,
-            'objects': objects,
+            'objects': page_obj.object_list,
+            'page_obj': page_obj,
+            'page_range_display': page_range_display,
             'fields': model_info['fields'],
             'panel_type': 'manager',
             'sort_by': sort_by,

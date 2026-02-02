@@ -283,6 +283,48 @@
                     </tbody>
                 </table>
             </div>
+
+            {% if page_obj and page_obj.paginator.num_pages > 1 %}
+            <div class="admin-pagination">
+                <div class="admin-pagination-info">
+                    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                    (всего {{ page_obj.paginator.count }} записей)
+                </div>
+                <div class="admin-pagination-controls">
+                    {% if page_obj.has_previous %}
+                        <a href="?table={{ selected_table }}{% if sort_by %}&sort_by={{ sort_by }}&order={{ sort_order }}{% endif %}&page={{ page_obj.previous_page_number }}" class="admin-pagination-btn">← Назад</a>
+                    {% else %}
+                        <span class="admin-pagination-btn disabled">← Назад</span>
+                    {% endif %}
+
+                    <div class="admin-pagination-numbers">
+                        {% if page_range_display.0 > 1 %}
+                            <a href="?table={{ selected_table }}{% if sort_by %}&sort_by={{ sort_by }}&order={{ sort_order }}{% endif %}&page=1" class="admin-pagination-num">1</a>
+                            {% if page_range_display.0 > 2 %}<span class="admin-pagination-ellipsis">…</span>{% endif %}
+                        {% endif %}
+                        {% for page_num in page_range_display %}
+                            {% if page_num == page_obj.number %}
+                                <span class="admin-pagination-num active">{{ page_num }}</span>
+                            {% else %}
+                                <a href="?table={{ selected_table }}{% if sort_by %}&sort_by={{ sort_by }}&order={{ sort_order }}{% endif %}&page={{ page_num }}" class="admin-pagination-num">{{ page_num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page_range_display|last < page_obj.paginator.num_pages %}
+                            {% with last_displayed=page_range_display|last total=page_obj.paginator.num_pages %}
+                            {% if last_displayed < total|add:"-1" %}<span class="admin-pagination-ellipsis">…</span>{% endif %}
+                            <a href="?table={{ selected_table }}{% if sort_by %}&sort_by={{ sort_by }}&order={{ sort_order }}{% endif %}&page={{ page_obj.paginator.num_pages }}" class="admin-pagination-num">{{ page_obj.paginator.num_pages }}</a>
+                            {% endwith %}
+                        {% endif %}
+                    </div>
+
+                    {% if page_obj.has_next %}
+                        <a href="?table={{ selected_table }}{% if sort_by %}&sort_by={{ sort_by }}&order={{ sort_order }}{% endif %}&page={{ page_obj.next_page_number }}" class="admin-pagination-btn">Вперёд →</a>
+                    {% else %}
+                        <span class="admin-pagination-btn disabled">Вперёд →</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </main>
     </div>
 </div>
@@ -600,6 +642,90 @@
     text-align: center;
     padding: 40px;
     color: var(--text-muted, #7f8c8d);
+}
+
+/* Пагинация */
+.admin-pagination {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border-color, #e1e8ed);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.admin-pagination-info {
+    color: var(--text-muted, #7f8c8d);
+    font-size: 14px;
+}
+
+.admin-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-pagination-btn {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #0bda51, #08a53d);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.admin-pagination-btn:hover:not(.disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(11, 218, 81, 0.3);
+}
+
+.admin-pagination-btn.disabled {
+    background: var(--bg-secondary, #e9ecef);
+    color: var(--text-muted, #95a5a6);
+    cursor: default;
+}
+
+.admin-pagination-numbers {
+    display: flex;
+    gap: 5px;
+}
+
+.admin-pagination-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    background: var(--bg-secondary, #f8f9fa);
+    color: var(--text-secondary, #2c3e50);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.admin-pagination-num:hover {
+    background: #0bda51;
+    color: white;
+}
+
+.admin-pagination-num.active {
+    background: linear-gradient(135deg, #0bda51, #08a53d);
+    color: white;
+}
+
+.admin-pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 6px;
+    color: var(--text-muted, #7f8c8d);
+    font-weight: 600;
 }
 
 /* Модальное окно */
