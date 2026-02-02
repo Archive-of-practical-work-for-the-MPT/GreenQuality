@@ -93,6 +93,9 @@ DATABASES = {
     }
 }
 
+# Путь к папке bin PostgreSQL (pg_dump, psql) — если не в PATH
+PG_BIN_PATH = os.environ.get('PG_BIN_PATH', '').strip()
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators

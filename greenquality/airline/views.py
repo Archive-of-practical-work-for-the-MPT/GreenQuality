@@ -7,9 +7,13 @@ from django.http import HttpResponse
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
+from django.conf import settings
 from datetime import timedelta
 import csv
 import json
+import subprocess
+import tempfile
+import os
 from .models import User, Account, Role, Payment, Ticket, Flight, Passenger, Airport, Class, BaggageType, Baggage, Airplane, AuditLog
 from .admin_views import (
     admin_panel, admin_crud, admin_get_record, admin_get_options,
@@ -746,6 +750,155 @@ def export_statistics(request, format_type):
     except Exception as e:
         messages.error(request, get_user_friendly_message(e, 'export'))
         return redirect('profile')
+
+
+def backup_database(request):
+    """Создание резервной копии БД (только для администратора)"""
+    if 'account_id' not in request.session:
+        messages.error(request, 'Для доступа необходимо войти в систему')
+        return redirect('login')
+
+    try:
+        account = Account.objects.get(id_account=request.session['account_id'])
+        if not account.role_id or account.role_id.role_name != 'ADMIN':
+            messages.error(request, 'Доступ только для администратора')
+            return redirect('profile')
+
+        db = settings.DATABASES['default']
+        dbname = db['NAME']
+        user = db['USER']
+        password = db.get('PASSWORD', '')
+        host = db.get('HOST', 'localhost')
+        port = db.get('PORT', '5432')
+
+        env = os.environ.copy()
+        if password:
+            env['PGPASSWORD'] = str(password)
+        env['PGCLIENTENCODING'] = 'UTF8'
+
+        pg_bin = getattr(settings, 'PG_BIN_PATH', '') or ''
+        pg_dump_cmd = os.path.join(pg_bin, 'pg_dump.exe' if os.name == 'nt' else 'pg_dump') if pg_bin else 'pg_dump'
+
+        result = subprocess.run(
+            [pg_dump_cmd, '-U', user, '-h', host, '-p', str(port), '-F', 'p',
+             '--clean', '--if-exists', '--no-owner', '--no-acl', dbname],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0,
+        )
+
+        if result.returncode != 0:
+            raise Exception(result.stderr or result.stdout or 'Ошибка pg_dump')
+
+        content = (result.stdout or '').encode('utf-8')
+        filename = f'greenquality_backup_{timezone.now().strftime("%Y%m%d_%H%M%S")}.sql'
+        response = HttpResponse(content, content_type='application/sql; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    except Account.DoesNotExist:
+        messages.error(request, 'Аккаунт не найден')
+        return redirect('login')
+    except subprocess.TimeoutExpired:
+        messages.error(request, 'Превышено время ожидания при создании резервной копии')
+        return redirect('profile')
+    except FileNotFoundError:
+        messages.error(
+            request,
+            'pg_dump не найден. Добавьте PG_BIN_PATH в .env (например: PG_BIN_PATH=C:\\Program Files\\PostgreSQL\\18\\bin)'
+        )
+        return redirect('profile')
+    except Exception as e:
+        messages.error(request, f'Ошибка создания резервной копии: {str(e)}')
+        return redirect('profile')
+
+
+def restore_database(request):
+    """Восстановление БД из резервной копии (только для администратора)"""
+    if 'account_id' not in request.session:
+        messages.error(request, 'Для доступа необходимо войти в систему')
+        return redirect('login')
+
+    if request.method != 'POST':
+        return redirect('profile')
+
+    try:
+        account = Account.objects.get(id_account=request.session['account_id'])
+        if not account.role_id or account.role_id.role_name != 'ADMIN':
+            messages.error(request, 'Доступ только для администратора')
+            return redirect('profile')
+
+        backup_file = request.FILES.get('backup_file')
+        if not backup_file:
+            messages.error(request, 'Выберите файл резервной копии (.sql)')
+            return redirect('profile')
+
+        if not backup_file.name.endswith('.sql'):
+            messages.error(request, 'Файл должен иметь расширение .sql')
+            return redirect('profile')
+
+        db = settings.DATABASES['default']
+        dbname = db['NAME']
+        user = db['USER']
+        password = db.get('PASSWORD', '')
+        host = db.get('HOST', 'localhost')
+        port = db.get('PORT', '5432')
+
+        env = os.environ.copy()
+        if password:
+            env['PGPASSWORD'] = str(password)
+        env['PGCLIENTENCODING'] = 'UTF8'
+
+        pg_bin = getattr(settings, 'PG_BIN_PATH', '') or ''
+        psql_cmd = os.path.join(pg_bin, 'psql.exe' if os.name == 'nt' else 'psql') if pg_bin else 'psql'
+
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.sql', delete=False) as tmp:
+            for chunk in backup_file.chunks():
+                tmp.write(chunk)
+            tmp_path = tmp.name
+
+        try:
+            from django.db import connection
+            connection.close()
+
+            result = subprocess.run(
+                [psql_cmd, '-U', user, '-h', host, '-p', str(port), '-d', dbname,
+                 '-f', tmp_path, '-v', 'ON_ERROR_STOP=1'],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=300,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0,
+            )
+
+            if result.returncode != 0:
+                err_msg = result.stderr or result.stdout or 'Ошибка восстановления'
+                raise Exception(err_msg[:500])
+
+            messages.success(request, 'База данных успешно восстановлена')
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+
+    except Account.DoesNotExist:
+        messages.error(request, 'Аккаунт не найден')
+        return redirect('login')
+    except subprocess.TimeoutExpired:
+        messages.error(request, 'Превышено время ожидания при восстановлении')
+        return redirect('profile')
+    except FileNotFoundError:
+        messages.error(
+            request,
+            'psql не найден. Добавьте PG_BIN_PATH в .env (например: PG_BIN_PATH=C:\\Program Files\\PostgreSQL\\18\\bin)'
+        )
+        return redirect('profile')
+    except Exception as e:
+        messages.error(request, f'Ошибка восстановления: {str(e)}')
+        return redirect('profile')
+
+    return redirect('profile')
 
 
 def buy_ticket(request, flight_id):

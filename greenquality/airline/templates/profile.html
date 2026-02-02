@@ -87,6 +87,14 @@
                         </svg>
                         Статистика
                     </button>
+                    <button class="tab-button" onclick="switchTab('backup', event)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Восстановление
+                    </button>
                 {% elif is_manager %}
                     <button class="tab-button" onclick="switchTab('statistics', event)">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -336,6 +344,40 @@
                                 </div>
                             </div>
                         {% endif %}
+                    </div>
+                </div>
+
+                <!-- Вкладка: Восстановление (бэкап/рестор) -->
+                <div id="tab-backup" class="tab-content" style="display: none;">
+                    <div class="content-card">
+                        <h3 class="content-title">Резервное копирование базы данных</h3>
+                        <p class="backup-description">Создайте резервную копию базы данных или восстановите её из ранее сохранённого файла.</p>
+                        
+                        <div class="backup-section">
+                            <h4 class="section-title">Создать резервную копию</h4>
+                            <p class="backup-hint">Скачайте полную копию базы данных в формате SQL. Файл можно использовать для восстановления.</p>
+                            <a href="{% url 'backup_database' %}" class="backup-btn">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Скачать резервную копию
+                            </a>
+                        </div>
+
+                        <div class="backup-section restore-section">
+                            <h4 class="section-title">Восстановить из резервной копии</h4>
+                            <p class="backup-warning">Внимание: восстановление заменит все текущие данные в базе. Убедитесь, что выбран правильный файл.</p>
+                            <form method="post" action="{% url 'restore_database' %}" enctype="multipart/form-data" class="restore-form" onsubmit="return confirm('Вы уверены? Все текущие данные будут заменены.');">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="backup_file">Файл резервной копии (.sql)</label>
+                                    <input type="file" id="backup_file" name="backup_file" accept=".sql" required>
+                                </div>
+                                <button type="submit" class="restore-btn">Восстановить базу данных</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             {% elif is_manager %}
@@ -1127,6 +1169,92 @@
     background: #e8f5e9;
     padding: 5px 12px;
     border-radius: 8px;
+}
+
+/* Стили для вкладки Восстановление */
+.backup-description {
+    color: var(--text-muted, #7f8c8d);
+    margin-bottom: 30px;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.backup-section {
+    margin-bottom: 40px;
+    padding: 25px;
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 15px;
+    border: 2px solid var(--border-color, #e1e8ed);
+}
+
+.backup-section.restore-section {
+    border-color: #fff3cd;
+    background: #fffbf0;
+}
+
+.backup-hint, .backup-warning {
+    font-size: 14px;
+    color: var(--text-muted, #7f8c8d);
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.backup-warning {
+    color: #856404;
+    font-weight: 500;
+}
+
+.backup-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #0bda51, #08a53d);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(11, 218, 81, 0.3);
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.backup-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(11, 218, 81, 0.4);
+    color: white;
+}
+
+.restore-form .form-group {
+    margin-bottom: 20px;
+}
+
+.restore-form input[type="file"] {
+    padding: 12px;
+    border: 2px solid var(--border-color, #e1e8ed);
+    border-radius: 10px;
+    background: var(--bg-color, white);
+    font-size: 14px;
+}
+
+.restore-btn {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+    font-size: 16px;
+}
+
+.restore-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.4);
 }
 </style>
 {% endblock %}
