@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'airline.middleware.Custom404Middleware',  # подмена любой 404 на нашу страницу (работает при DEBUG=True)
 ]
 
 ROOT_URLCONF = 'greenquality.urls'

@@ -15,6 +15,7 @@ from .admin_views import (
     admin_panel, admin_crud, admin_get_record, admin_get_options,
     manager_panel, manager_crud, manager_get_record, manager_get_options
 )
+from .exceptions_utils import get_user_friendly_message
 from decimal import Decimal
 
 
@@ -176,7 +177,7 @@ def login_view(request):
         except Account.DoesNotExist:
             messages.error(request, 'Пользователь с таким email не найден')
         except Exception as e:
-            messages.error(request, f'Ошибка при входе: {str(e)}')
+            messages.error(request, get_user_friendly_message(e, 'login'))
 
     return render(request, 'login.html')
 
@@ -263,7 +264,7 @@ def register_view(request):
             messages.error(request, 'Ошибка: роль USER не найдена в системе')
             return render(request, 'register.html', context)
         except Exception as e:
-            messages.error(request, f'Ошибка при регистрации: {str(e)}')
+            messages.error(request, get_user_friendly_message(e, 'register'))
             return render(request, 'register.html', context)
 
     return render(request, 'register.html', context)
@@ -341,8 +342,7 @@ def profile_view(request):
             try:
                 user.save()
             except Exception as e:
-                messages.error(
-                    request, f'Ошибка при сохранении данных: {str(e)}')
+                messages.error(request, get_user_friendly_message(e, 'save'))
                 # Возвращаем форму с сохраненными данными при ошибке
                 context = {
                     'user': user,
@@ -620,9 +620,7 @@ def profile_view(request):
     except Exception as e:
         import traceback
         # Логируем полную ошибку для отладки
-        print(f"Ошибка в profile_view: {str(e)}")
-        print(traceback.format_exc())
-        messages.error(request, f'Ошибка при загрузке профиля: {str(e)}')
+        messages.error(request, get_user_friendly_message(e, 'load'))
         return redirect('index')
 
 
@@ -737,7 +735,7 @@ def export_statistics(request, format_type):
         messages.error(request, 'Аккаунт не найден')
         return redirect('login')
     except Exception as e:
-        messages.error(request, f'Ошибка при экспорте: {str(e)}')
+        messages.error(request, get_user_friendly_message(e, 'export'))
         return redirect('profile')
 
 
@@ -808,7 +806,7 @@ def buy_ticket(request, flight_id):
         messages.error(request, 'Рейс не найден')
         return redirect('flights')
     except Exception as e:
-        messages.error(request, f'Ошибка: {str(e)}')
+        messages.error(request, get_user_friendly_message(e))
         return redirect('flights')
 
 
@@ -917,7 +915,7 @@ def buy_ticket_seat(request, flight_id):
         messages.error(request, 'Рейс не найден')
         return redirect('flights')
     except Exception as e:
-        messages.error(request, f'Ошибка: {str(e)}')
+        messages.error(request, get_user_friendly_message(e))
         return redirect('flights')
 
 
@@ -1070,8 +1068,23 @@ def buy_ticket_confirm(request, flight_id):
         messages.error(request, 'Рейс не найден')
         return redirect('flights')
     except Exception as e:
-        messages.error(request, f'Ошибка: {str(e)}')
+        messages.error(request, get_user_friendly_message(e))
         return redirect('flights')
 
 
-# Admin panel functions
+def custom_page_not_found(request, exception):
+    """Обработчик 404 — страница не найдена (понятное сообщение на русском)."""
+    return render(request, '404.html', status=404)
+
+
+def page_not_found_catchall(request, path):
+    """
+    Запасной маршрут для неизвестных URL.
+    При DEBUG=True Django не вызывает handler404, поэтому показываем нашу 404 сами.
+    """
+    return render(request, '404.html', status=404)
+
+
+def custom_server_error(request):
+    """Обработчик 500 — внутренняя ошибка сервера (понятное сообщение на русском)."""
+    return render(request, '500.html', status=500)

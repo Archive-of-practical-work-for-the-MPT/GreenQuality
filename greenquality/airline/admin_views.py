@@ -11,6 +11,7 @@ from .models import (
     User, Account, Role, Payment, Ticket, Flight, Passenger, 
     Airport, Class, BaggageType, Baggage, Airplane, AuditLog
 )
+from .exceptions_utils import get_user_friendly_message
 
 
 def admin_panel(request):
@@ -177,7 +178,7 @@ def admin_panel(request):
         messages.error(request, 'Аккаунт не найден')
         return redirect('login')
     except Exception as e:
-        messages.error(request, f'Ошибка: {str(e)}')
+        messages.error(request, get_user_friendly_message(e))
         return redirect('index')
 
 
@@ -234,7 +235,7 @@ def admin_crud(request):
             except model.DoesNotExist:
                 messages.error(request, 'Запись не найдена')
             except Exception as e:
-                messages.error(request, f'Ошибка при удалении: {str(e)}')
+                messages.error(request, get_user_friendly_message(e, 'delete'))
             return redirect(f'/admin-panel/?table={table_name}')
         
         elif action in ['create', 'update']:
@@ -273,7 +274,7 @@ def admin_crud(request):
                     try:
                         data[field_name] = related_model.objects.get(pk=data[field_name])
                     except related_model.DoesNotExist:
-                        messages.error(request, f'Связанная запись не найдена для поля {field_name}')
+                        messages.error(request, 'Связанная запись не найдена. Выберите существующее значение.')
                         return redirect(f'/admin-panel/?table={table_name}')
                 elif field_name in data:
                     data[field_name] = None
@@ -330,7 +331,7 @@ def admin_crud(request):
                     obj = model.objects.create(**data)
                     messages.success(request, 'Запись успешно создана')
                 except Exception as e:
-                    messages.error(request, f'Ошибка при создании: {str(e)}')
+                    messages.error(request, get_user_friendly_message(e, 'create'))
             elif action == 'update':
                 # Обновляем существующую запись
                 if not record_id:
@@ -345,7 +346,7 @@ def admin_crud(request):
                 except model.DoesNotExist:
                     messages.error(request, 'Запись не найдена')
                 except Exception as e:
-                    messages.error(request, f'Ошибка при обновлении: {str(e)}')
+                    messages.error(request, get_user_friendly_message(e, 'update'))
             
             return redirect(f'/admin-panel/?table={table_name}')
         
@@ -355,7 +356,7 @@ def admin_crud(request):
         messages.error(request, 'Аккаунт не найден')
         return redirect('login')
     except Exception as e:
-        messages.error(request, f'Ошибка: {str(e)}')
+        messages.error(request, get_user_friendly_message(e))
         return redirect('index')
 
 
@@ -416,7 +417,7 @@ def admin_get_record(request):
         return JsonResponse(data)
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': get_user_friendly_message(e, 'load')}, status=500)
 
 
 def admin_get_options(request):
@@ -470,7 +471,7 @@ def admin_get_options(request):
         return JsonResponse(options, safe=False)
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': get_user_friendly_message(e, 'load')}, status=500)
 
 
 def manager_panel(request):
@@ -583,7 +584,7 @@ def manager_panel(request):
         messages.error(request, 'Аккаунт не найден')
         return redirect('login')
     except Exception as e:
-        messages.error(request, f'Ошибка: {str(e)}')
+        messages.error(request, get_user_friendly_message(e))
         return redirect('index')
 
 
@@ -633,7 +634,7 @@ def manager_crud(request):
             except model.DoesNotExist:
                 messages.error(request, 'Запись не найдена')
             except Exception as e:
-                messages.error(request, f'Ошибка при удалении: {str(e)}')
+                messages.error(request, get_user_friendly_message(e, 'delete'))
             return redirect(f'/manager-panel/?table={table_name}')
         
         elif action in ['create', 'update']:
@@ -663,7 +664,7 @@ def manager_crud(request):
                     try:
                         data[field_name] = related_model.objects.get(pk=data[field_name])
                     except related_model.DoesNotExist:
-                        messages.error(request, f'Связанная запись не найдена для поля {field_name}')
+                        messages.error(request, 'Связанная запись не найдена. Выберите существующее значение.')
                         return redirect(f'/manager-panel/?table={table_name}')
                 elif field_name in data:
                     data[field_name] = None
@@ -705,7 +706,7 @@ def manager_crud(request):
                     obj = model.objects.create(**data)
                     messages.success(request, 'Запись успешно создана')
                 except Exception as e:
-                    messages.error(request, f'Ошибка при создании: {str(e)}')
+                    messages.error(request, get_user_friendly_message(e, 'create'))
             elif action == 'update':
                 # Обновляем существующую запись
                 if not record_id:
@@ -720,7 +721,7 @@ def manager_crud(request):
                 except model.DoesNotExist:
                     messages.error(request, 'Запись не найдена')
                 except Exception as e:
-                    messages.error(request, f'Ошибка при обновлении: {str(e)}')
+                    messages.error(request, get_user_friendly_message(e, 'update'))
             
             return redirect(f'/manager-panel/?table={table_name}')
         
@@ -730,7 +731,7 @@ def manager_crud(request):
         messages.error(request, 'Аккаунт не найден')
         return redirect('login')
     except Exception as e:
-        messages.error(request, f'Ошибка: {str(e)}')
+        messages.error(request, get_user_friendly_message(e))
         return redirect('index')
 
 
@@ -785,7 +786,7 @@ def manager_get_record(request):
         return JsonResponse(data)
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': get_user_friendly_message(e, 'load')}, status=500)
 
 
 def manager_get_options(request):
@@ -838,4 +839,4 @@ def manager_get_options(request):
         return JsonResponse(options, safe=False)
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': get_user_friendly_message(e, 'load')}, status=500)

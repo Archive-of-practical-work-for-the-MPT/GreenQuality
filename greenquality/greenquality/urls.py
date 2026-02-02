@@ -22,3 +22,7 @@ urlpatterns = [
     path('api/', include('airline.api_urls')),  # RESTful API endpoints
     path('', include('airline.urls')),
 ]
+
+# Обработчики ошибок с понятными сообщениями на русском
+handler404 = 'airline.views.custom_page_not_found'
+handler500 = 'airline.views.custom_server_error'
