@@ -3,10 +3,11 @@ from .models import Account
 
 
 def admin_status(request):
-    """Добавляет is_admin и is_manager в контекст всех шаблонов"""
+    """Добавляет is_admin, is_manager и is_authenticated в контекст всех шаблонов"""
     is_admin = False
     is_manager = False
-    
+    is_authenticated = 'account_id' in request.session
+
     if 'account_id' in request.session:
         account_id = request.session.get('account_id')
         try:
@@ -32,5 +33,5 @@ def admin_status(request):
             del request.session['is_admin']
         if 'is_manager' in request.session:
             del request.session['is_manager']
-    
-    return {'is_admin': is_admin, 'is_manager': is_manager}
+
+    return {'is_admin': is_admin, 'is_manager': is_manager, 'is_authenticated': is_authenticated}
