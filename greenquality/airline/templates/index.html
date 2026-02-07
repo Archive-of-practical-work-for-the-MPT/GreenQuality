@@ -1,5 +1,43 @@
 {% extends 'base.html' %}
 
+{% block extra_css %}
+<style>
+.flights-cta {
+    text-align: center;
+    background: #ffffff;
+    border: 4px solid #e8ecef;
+    border-radius: 20px;
+    padding: 48px 40px;
+    margin-bottom: 40px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+}
+.flights-cta-heading {
+    color: #2c3e50;
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 20px 0;
+}
+.flights-cta-btn {
+    display: inline-block;
+    background: linear-gradient(45deg, #0bda51, #08a53d);
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 600;
+    padding: 15px 36px;
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(11, 218, 81, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+.flights-cta-btn:hover {
+    color: #fff;
+    transform: translateY(-3px);
+    box-shadow: 0 7px 20px rgba(11, 218, 81, 0.4);
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Карусель с фотографиями на всю ширину экрана -->
 <div class="carousel">
@@ -38,38 +76,11 @@
     </div>
 </div>
 
-<!-- Поиск (покупка билетов) -->
+<!-- Переход к рейсам -->
 <div class="container">
-    <section class="search-section">
-        <h2>Поиск рейсов</h2>
-        <form class="search-form">
-            <div class="form-group">
-                <label for="from">Откуда</label>
-                <input type="text" id="from" placeholder="Город отправления">
-            </div>
-            <div class="form-group">
-                <label for="to">Куда</label>
-                <input type="text" id="to" placeholder="Город назначения">
-            </div>
-            <div class="form-group">
-                <label for="departure">Дата вылета</label>
-                <input type="date" id="departure">
-            </div>
-            <div class="form-group">
-                <label for="return">Дата возврата</label>
-                <input type="date" id="return">
-            </div>
-            <div class="form-group">
-                <label for="passengers">Пассажиры</label>
-                <select id="passengers">
-                    <option>1 пассажир</option>
-                    <option>2 пассажира</option>
-                    <option>3 пассажира</option>
-                    <option>4+ пассажиров</option>
-                </select>
-            </div>
-            <button type="submit" class="search-btn">Найти билеты</button>
-        </form>
+    <section class="flights-cta">
+        <p class="flights-cta-heading">Купите билет — выберите рейс и забронируйте место</p>
+        <a href="{% url 'flights' %}" class="flights-cta-btn">Перейти к рейсам</a>
     </section>
 
     <!-- Специальные предложения -->
