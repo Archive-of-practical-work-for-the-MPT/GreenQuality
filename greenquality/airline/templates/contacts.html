@@ -54,7 +54,8 @@
                 </div>
                 <div class="form-group">
                     <label for="phone">Телефон</label>
-                    <input type="tel" id="phone" name="phone">
+                    <input type="tel" id="phone" name="phone" maxlength="20" inputmode="numeric"
+                           pattern="\+?[0-9]*" title="Только цифры (в начале допускается +)">
                 </div>
                 <div class="form-group">
                     <label for="subject">Тема обращения *</label>

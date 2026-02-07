@@ -24,6 +24,7 @@ from .admin_views import (
 )
 from .exceptions_utils import get_user_friendly_message
 from . import db_reports
+from .forms import ProfileForm
 from decimal import Decimal
 
 
@@ -323,89 +324,99 @@ def profile_view(request):
             )
 
         if request.method == 'POST':
-            # Получаем данные из формы
-            first_name = request.POST.get('first_name', '').strip()
-            last_name = request.POST.get('last_name', '').strip()
-            patronymic = request.POST.get('patronymic', '').strip()
-            phone = request.POST.get('phone', '').strip()
-            passport_number = request.POST.get('passport_number', '').strip()
-            birthday = request.POST.get('birthday', '').strip()
-            email = request.POST.get('email', '').strip()
-
-            # Обновляем данные пользователя
-            if first_name:
-                user.first_name = first_name
-            if last_name:
-                user.last_name = last_name
-            user.patronymic = patronymic if patronymic else None
-            user.phone = phone if phone else None
-            user.passport_number = passport_number if passport_number else None
-            # Обрабатываем дату рождения (формат дд.мм.гггг)
-            if birthday:
-                try:
-                    # Пробуем распарсить дату в формате дд.мм.гггг
-                    if '.' in birthday:
-                        day, month, year = birthday.split('.')
-                        birthday = f"{year}-{month}-{day}"
-                    user.birthday = parse_date(birthday)
-                except (ValueError, TypeError):
-                    user.birthday = None
-            else:
-                user.birthday = None
-
-            # Сохраняем пользователя с обработкой ошибок
-            try:
-                user.save()
-            except Exception as e:
-                messages.error(request, get_user_friendly_message(e, 'save'))
-                # Возвращаем форму с сохраненными данными при ошибке (контекст для обычного пользователя)
-                context = {
+            form = ProfileForm(request.POST)
+            if not form.is_valid():
+                # Собираем контекст для повторного отображения формы с ошибками
+                cd = form.cleaned_data
+                err_ctx = {
                     'user': user,
                     'account': account,
-                    'email': email if email else account.email,
-                    'first_name': first_name if first_name else (user.first_name or ''),
-                    'last_name': last_name if last_name else (user.last_name or ''),
-                    'patronymic': patronymic if patronymic else (user.patronymic or ''),
-                    'phone': phone if phone else (user.phone or ''),
-                    'passport_number': passport_number if passport_number else (user.passport_number or ''),
-                    'birthday': birthday if birthday else (user.birthday.strftime('%d.%m.%Y') if user.birthday else ''),
+                    'profile_form': form,
+                    'email': request.POST.get('email', '').strip() or account.email,
+                    'first_name': request.POST.get('first_name', '').strip() or (user.first_name or ''),
+                    'last_name': request.POST.get('last_name', '').strip() or (user.last_name or ''),
+                    'patronymic': request.POST.get('patronymic', '').strip() or (user.patronymic or ''),
+                    'phone': request.POST.get('phone', '').strip() or (user.phone or ''),
+                    'passport_number': request.POST.get('passport_number', '').strip() or (user.passport_number or ''),
+                    'birthday': request.POST.get('birthday', '').strip() or (user.birthday.strftime('%d.%m.%Y') if user.birthday else ''),
                     'is_admin': False,
                     'is_manager': False,
                     'tickets': [],
                     'total_tickets': 0,
                     'user_payments_30d': Decimal('0'),
                 }
-                return render(request, 'profile.html', context)
+                return render(request, 'profile.html', err_ctx)
 
-            # Обновляем email в аккаунте, если он изменился
+            first_name = form.cleaned_data['first_name']
+            last_name = form.cleaned_data['last_name']
+            patronymic = form.cleaned_data.get('patronymic') or None
+            phone = form.cleaned_data.get('phone') or None
+            passport_number = form.cleaned_data.get('passport_number') or None
+            birthday_str = form.cleaned_data.get('birthday') or ''
+            email = form.cleaned_data['email']
+
+            user.first_name = first_name
+            user.last_name = last_name
+            user.patronymic = patronymic
+            user.phone = phone
+            user.passport_number = passport_number
+            if birthday_str:
+                try:
+                    parts = birthday_str.split('.')
+                    user.birthday = parse_date(f"{parts[2]}-{parts[1]}-{parts[0]}")
+                except (ValueError, TypeError, IndexError):
+                    user.birthday = None
+            else:
+                user.birthday = None
+
+            try:
+                user.save()
+            except Exception as e:
+                messages.error(request, get_user_friendly_message(e, 'save'))
+                err_ctx = {
+                    'user': user,
+                    'account': account,
+                    'profile_form': form,
+                    'email': email,
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'patronymic': patronymic or '',
+                    'phone': phone or '',
+                    'passport_number': passport_number or '',
+                    'birthday': birthday_str,
+                    'is_admin': False,
+                    'is_manager': False,
+                    'tickets': [],
+                    'total_tickets': 0,
+                    'user_payments_30d': Decimal('0'),
+                }
+                return render(request, 'profile.html', err_ctx)
+
             if email and email != account.email:
-                # Проверяем, не занят ли новый email
                 if Account.objects.filter(email=email).exclude(id_account=account_id).exists():
-                    messages.error(
-                        request, 'Пользователь с таким email уже существует')
-                    # Возвращаем форму с сохраненными данными при ошибке (контекст для обычного пользователя)
-                    context = {
+                    messages.error(request, 'Пользователь с таким email уже существует')
+                    err_ctx = {
                         'user': user,
                         'account': account,
+                        'profile_form': form,
                         'email': email,
-                        'first_name': first_name if first_name else (user.first_name or ''),
-                        'last_name': last_name if last_name else (user.last_name or ''),
-                        'patronymic': patronymic if patronymic else (user.patronymic or ''),
-                        'phone': phone if phone else (user.phone or ''),
-                        'passport_number': passport_number if passport_number else (user.passport_number or ''),
-                        'birthday': birthday if birthday else (user.birthday.strftime('%d.%m.%Y') if user.birthday else ''),
+                        'first_name': first_name,
+                        'last_name': last_name,
+                        'patronymic': patronymic or '',
+                        'phone': phone or '',
+                        'passport_number': passport_number or '',
+                        'birthday': birthday_str,
                         'is_admin': False,
                         'is_manager': False,
                         'tickets': [],
                         'total_tickets': 0,
                         'user_payments_30d': Decimal('0'),
                     }
-                    return render(request, 'profile.html', context)
-                else:
-                    account.email = email
-                    account.save()
-                    request.session['user_email'] = email
-                    messages.success(request, 'Email успешно обновлен')
+                    return render(request, 'profile.html', err_ctx)
+                account.email = email
+                account.save()
+                request.session['user_email'] = email
+                messages.success(request, 'Email успешно обновлен')
 
             messages.success(request, 'Профиль успешно обновлен')
             return redirect('profile')
@@ -485,6 +496,7 @@ def profile_view(request):
             context = {
                 'user': user,
                 'account': account,
+                'profile_form': None,
                 'email': account.email,
                 'first_name': user.first_name or '',
                 'last_name': user.last_name or '',
@@ -611,6 +623,7 @@ def profile_view(request):
             context = {
                 'user': user,
                 'account': account,
+                'profile_form': None,
                 'email': account.email,
                 'first_name': user.first_name or '',
                 'last_name': user.last_name or '',
@@ -662,6 +675,7 @@ def profile_view(request):
             context = {
                 'user': user,
                 'account': account,
+                'profile_form': None,
                 'email': account.email,
                 'first_name': user.first_name or '',
                 'last_name': user.last_name or '',

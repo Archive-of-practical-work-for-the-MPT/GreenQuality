@@ -146,6 +146,11 @@
             <div id="tab-info" class="tab-content active">
                 <div class="content-card">
                     <h3 class="content-title">Редактирование профиля</h3>
+                    {% if profile_form and profile_form.non_field_errors %}
+                        <div class="profile-form-errors">
+                            {% for err in profile_form.non_field_errors %}<p class="form-error">{{ err }}</p>{% endfor %}
+                        </div>
+                    {% endif %}
                     <form class="profile-form" method="post" novalidate>
                         {% csrf_token %}
                         <div class="form-row">
@@ -153,49 +158,67 @@
                                 <label for="first_name">Имя</label>
                                 <input type="text" id="first_name" name="first_name" value="{{ first_name|default:'' }}" required 
                                        oninvalid="this.setCustomValidity('Пожалуйста, заполните поле Имя')" 
-                                       oninput="this.setCustomValidity('')">
+                                       oninput="this.setCustomValidity('')" class="{% if profile_form and profile_form.errors.first_name %}input-error{% endif %}">
+                                {% if profile_form and profile_form.errors.first_name %}
+                                    <span class="field-error">{{ profile_form.errors.first_name.0 }}</span>
+                                {% endif %}
                             </div>
-                            
                             <div class="form-group">
                                 <label for="last_name">Фамилия</label>
                                 <input type="text" id="last_name" name="last_name" value="{{ last_name|default:'' }}" required 
                                        oninvalid="this.setCustomValidity('Пожалуйста, заполните поле Фамилия')" 
-                                       oninput="this.setCustomValidity('')">
+                                       oninput="this.setCustomValidity('')" class="{% if profile_form and profile_form.errors.last_name %}input-error{% endif %}">
+                                {% if profile_form and profile_form.errors.last_name %}
+                                    <span class="field-error">{{ profile_form.errors.last_name.0 }}</span>
+                                {% endif %}
                             </div>
                         </div>
-                        
                         <div class="form-group">
                             <label for="patronymic">Отчество (необязательно)</label>
-                            <input type="text" id="patronymic" name="patronymic" value="{{ patronymic|default:'' }}">
+                            <input type="text" id="patronymic" name="patronymic" value="{{ patronymic|default:'' }}" class="{% if profile_form and profile_form.errors.patronymic %}input-error{% endif %}">
+                            {% if profile_form and profile_form.errors.patronymic %}
+                                <span class="field-error">{{ profile_form.errors.patronymic.0 }}</span>
+                            {% endif %}
                         </div>
-                        
                         <div class="form-group">
                             <label for="email">Email</label>
                             <input type="email" id="email" name="email" value="{{ email|default:'' }}" required 
                                    oninvalid="this.setCustomValidity('Пожалуйста, введите корректный email адрес')" 
-                                   oninput="this.setCustomValidity('')">
+                                   oninput="this.setCustomValidity('')" class="{% if profile_form and profile_form.errors.email %}input-error{% endif %}">
+                            {% if profile_form and profile_form.errors.email %}
+                                <span class="field-error">{{ profile_form.errors.email.0 }}</span>
+                            {% endif %}
                         </div>
-                        
                         <div class="form-group">
                             <label for="phone">Телефон (необязательно)</label>
                             <input type="tel" id="phone" name="phone" value="{{ phone|default:'' }}" 
-                                   placeholder="+79991234567" maxlength="20">
+                                   placeholder="+79991234567" maxlength="20" inputmode="numeric" 
+                                   pattern="\+?[0-9]+" title="Только цифры (в начале допускается +)"
+                                   class="{% if profile_form and profile_form.errors.phone %}input-error{% endif %}">
+                            {% if profile_form and profile_form.errors.phone %}
+                                <span class="field-error">{{ profile_form.errors.phone.0 }}</span>
+                            {% endif %}
                         </div>
-                        
                         <div class="form-group">
                             <label for="passport_number">Номер паспорта (необязательно)</label>
                             <input type="text" id="passport_number" name="passport_number" value="{{ passport_number|default:'' }}" 
-                                   placeholder="1234 567890">
+                                   placeholder="1234 567890" maxlength="20" inputmode="numeric"
+                                   pattern="[\d\s]*" title="Только цифры и пробелы"
+                                   class="{% if profile_form and profile_form.errors.passport_number %}input-error{% endif %}">
+                            {% if profile_form and profile_form.errors.passport_number %}
+                                <span class="field-error">{{ profile_form.errors.passport_number.0 }}</span>
+                            {% endif %}
                         </div>
-                        
                         <div class="form-group">
                             <label for="birthday">Дата рождения (необязательно)</label>
                             <input type="text" id="birthday" name="birthday" value="{{ birthday|default:'' }}" 
                                    placeholder="дд.мм.гггг" pattern="\d{2}\.\d{2}\.\d{4}" 
                                    oninvalid="this.setCustomValidity('Введите дату в формате дд.мм.гггг')" 
-                                   oninput="this.setCustomValidity('')">
+                                   oninput="this.setCustomValidity('')" class="{% if profile_form and profile_form.errors.birthday %}input-error{% endif %}">
+                            {% if profile_form and profile_form.errors.birthday %}
+                                <span class="field-error">{{ profile_form.errors.birthday.0 }}</span>
+                            {% endif %}
                         </div>
-                        
                         <button type="submit" class="submit-btn">Сохранить изменения</button>
                     </form>
                 </div>
@@ -934,6 +957,25 @@
     box-shadow: 0 0 0 3px rgba(11, 218, 81, 0.2);
 }
 
+.form-group input.input-error {
+    border-color: #e74c3c;
+}
+
+.form-group .field-error,
+.profile-form-errors .form-error {
+    color: #c0392b;
+    font-size: 13px;
+    margin-top: 6px;
+}
+
+.profile-form-errors {
+    margin-bottom: 16px;
+    padding: 12px;
+    background: #fff5f5;
+    border: 1px solid #e74c3c;
+    border-radius: 8px;
+}
+
 .submit-btn {
     background: linear-gradient(135deg, #0bda51, #08a53d);
     color: #ffffff;
@@ -1491,6 +1533,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 btn.click();
             }
         }
+    }
+
+    // Телефон: только цифры и один + в начале
+    const phoneInput = document.getElementById('phone');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let v = e.target.value;
+            if (v.startsWith('+')) {
+                v = '+' + v.slice(1).replace(/\D/g, '');
+            } else {
+                v = v.replace(/\D/g, '');
+            }
+            e.target.value = v;
+        });
+    }
+    // Номер паспорта: только цифры и пробелы
+    const passportInput = document.getElementById('passport_number');
+    if (passportInput) {
+        passportInput.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/[^\d\s]/g, '');
+        });
     }
 
     const birthdayInput = document.getElementById('birthday');

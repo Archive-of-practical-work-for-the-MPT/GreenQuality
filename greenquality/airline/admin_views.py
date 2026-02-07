@@ -1,4 +1,5 @@
 """Функции для панели администратора"""
+import re
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -7,13 +8,96 @@ from django.http import JsonResponse
 from django.contrib.auth.hashers import make_password
 from django.utils.dateparse import parse_date, parse_datetime
 from django.urls import reverse
-from decimal import Decimal
+from django.db import models as django_models
+from decimal import Decimal, InvalidOperation
 from .models import (
-    User, Account, Role, Payment, Ticket, Flight, Passenger, 
+    User, Account, Role, Payment, Ticket, Flight, Passenger,
     Airport, Class, BaggageType, Baggage, Airplane, AuditLog
 )
 from .exceptions_utils import get_user_friendly_message
 from .audit_utils import model_instance_to_audit_dict, get_record_id_for_audit, log_audit
+
+
+def _validate_crud_data(model, data, action, instance=None):
+    """
+    Валидация данных для CRUD. Возвращает список строк с ошибками (пустой — если всё ок).
+    """
+    errors = []
+    # Только конкретные поля модели (без обратных связей)
+    for field in model._meta.fields:
+        if getattr(field, 'primary_key', False) or isinstance(field, django_models.AutoField):
+            continue
+        if getattr(field, 'auto_now_add', False) or getattr(field, 'auto_now', False):
+            continue
+
+        value = data.get(field.name)
+        is_empty = value is None or value == '' or (isinstance(value, str) and not value.strip())
+
+        # Обязательность при создании
+        if action == 'create':
+            if not field.null and not getattr(field, 'blank', True):
+                if is_empty:
+                    label = getattr(field, 'verbose_name', field.name)
+                    errors.append(f'Поле «{label}» обязательно для заполнения.')
+                    continue
+        elif action == 'update':
+            if is_empty and not field.null and not getattr(field, 'blank', True):
+                continue
+
+        if is_empty:
+            continue
+
+        # Длина строки
+        if isinstance(field, django_models.CharField) and hasattr(field, 'max_length'):
+            if len(str(value)) > field.max_length:
+                label = getattr(field, 'verbose_name', field.name)
+                errors.append(f'Поле «{label}» не должно превышать {field.max_length} символов.')
+
+        # Телефон: только цифры (допускается + в начале)
+        if field.name == 'phone' and value:
+            if not re.match(r'^\+?\d+$', str(value)):
+                label = getattr(field, 'verbose_name', field.name)
+                errors.append(f'Поле «{label}» должно содержать только цифры (в начале допускается +).')
+        # Номер паспорта: только цифры и пробелы
+        if field.name == 'passport_number' and value:
+            if not re.match(r'^[\d\s]+$', str(value)):
+                label = getattr(field, 'verbose_name', field.name)
+                errors.append(f'Поле «{label}» должно содержать только цифры и пробелы.')
+
+        # Выбор из списка (choices)
+        if getattr(field, 'choices', None):
+            allowed = [str(c[0]) for c in field.choices]
+            if str(value) not in allowed:
+                label = getattr(field, 'verbose_name', field.name)
+                errors.append(f'Поле «{label}» должно быть одним из: {", ".join(allowed)}.')
+
+        # Decimal: корректное число и не отрицательное где нужно
+        if isinstance(field, django_models.DecimalField):
+            try:
+                d = Decimal(str(value))
+                non_negative = field.name in (
+                    'total_cost', 'price', 'max_weight_kg', 'base_price', 'weight_kg',
+                    'capacity', 'economy_capacity', 'business_capacity', 'first_capacity', 'rows', 'seats_row'
+                )
+                if non_negative and d < 0:
+                    label = getattr(field, 'verbose_name', field.name)
+                    errors.append(f'Поле «{label}» должно быть не меньше нуля.')
+            except (InvalidOperation, TypeError, ValueError):
+                label = getattr(field, 'verbose_name', field.name)
+                errors.append(f'Поле «{label}» должно быть числом.')
+
+        # Integer: не отрицательный где нужно
+        if isinstance(field, django_models.IntegerField) and not isinstance(field, django_models.AutoField):
+            try:
+                v = int(value)
+                if field.name in ('capacity', 'economy_capacity', 'business_capacity', 'first_capacity', 'rows', 'seats_row') and v < 0:
+                    label = getattr(field, 'verbose_name', field.name)
+                    errors.append(f'Поле «{label}» должно быть не меньше нуля.')
+            except (TypeError, ValueError):
+                label = getattr(field, 'verbose_name', field.name)
+                errors.append(f'Поле «{label}» должно быть целым числом.')
+
+    return errors
 
 
 def admin_panel(request):
@@ -338,14 +422,27 @@ def admin_crud(request):
                 if 'departure_time' in data and data['departure_time']:
                     try:
                         data['departure_time'] = parse_datetime(data['departure_time'])
-                    except:
+                    except Exception:
                         pass
                 if 'arrival_time' in data and data['arrival_time']:
                     try:
                         data['arrival_time'] = parse_datetime(data['arrival_time'])
-                    except:
+                    except Exception:
                         pass
-            
+
+            # Валидация перед созданием/обновлением
+            instance = None
+            if action == 'update' and record_id:
+                try:
+                    instance = model.objects.get(pk=record_id)
+                except model.DoesNotExist:
+                    pass
+            validation_errors = _validate_crud_data(model, data, action, instance=instance)
+            if validation_errors:
+                for err in validation_errors:
+                    messages.error(request, err)
+                return redirect(f'/admin-panel/?table={table_name}')
+
             if action == 'create':
                 # Создаем новую запись
                 try:
@@ -748,9 +845,22 @@ def manager_crud(request):
                     if field_name in data and data[field_name]:
                         try:
                             data[field_name] = parse_datetime(data[field_name])
-                        except:
+                        except Exception:
                             pass
-            
+
+            # Валидация перед созданием/обновлением
+            instance = None
+            if action == 'update' and record_id:
+                try:
+                    instance = model.objects.get(pk=record_id)
+                except model.DoesNotExist:
+                    pass
+            validation_errors = _validate_crud_data(model, data, action, instance=instance)
+            if validation_errors:
+                for err in validation_errors:
+                    messages.error(request, err)
+                return redirect(f'/manager-panel/?table={table_name}')
+
             if action == 'create':
                 # Создаем новую запись
                 try:
