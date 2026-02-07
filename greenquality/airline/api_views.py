@@ -23,7 +23,7 @@ class AirportViewSet(viewsets.ModelViewSet):
     ViewSet для работы с аэропортами
     Предоставляет CRUD операции: Create, Read, Update, Delete
     """
-    queryset = Airport.objects.all()
+    queryset = Airport.objects.all().order_by('id_airport')
     serializer_class = AirportSerializer
     
     @action(detail=False, methods=['get'])
@@ -45,7 +45,7 @@ class FlightViewSet(viewsets.ModelViewSet):
     """
     queryset = Flight.objects.select_related(
         'departure_airport_id', 'arrival_airport_id', 'airplane_id'
-    ).all()
+    ).order_by('id_flight')
     serializer_class = FlightSerializer
     
     @action(detail=False, methods=['get'])

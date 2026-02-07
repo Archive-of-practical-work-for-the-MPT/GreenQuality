@@ -167,3 +167,6 @@ REST_FRAMEWORK = {
         'airline.api_permissions.IsAdminUser',
     ],
 }
+
+# Подробный вывод тестов на русском языке
+TEST_RUNNER = 'tests.test_runner.RussianDiscoverRunner'
