@@ -205,17 +205,17 @@ class Ticket(models.Model):
         Flight, on_delete=models.CASCADE, db_column='flight_id')
     class_id = models.ForeignKey(
         Class, on_delete=models.CASCADE, db_column='class_id')
-    # Изменено с seat на seat_number для большей гибкости
     seat_number = models.CharField(max_length=5)
-    price = models.DecimalField(max_digits=8, decimal_places=2)
+    price = models.DecimalField(max_digits=8, decimal_places=2, default=0)
     status = models.CharField(max_length=20, choices=[
+        ('AVAILABLE', 'Свободен'),
         ('BOOKED', 'Забронирован'),
         ('PAID', 'Оплачен'),
         ('CHECKED_IN', 'Зарегистрирован'),
         ('CANCELLED', 'Отменен')
-    ], default='BOOKED')
+    ], default='AVAILABLE')
     passenger_id = models.ForeignKey(
-        Passenger, on_delete=models.CASCADE, db_column='passenger_id')
+        Passenger, on_delete=models.CASCADE, db_column='passenger_id', blank=True, null=True)
     payment_id = models.ForeignKey(
         Payment, on_delete=models.SET_NULL, blank=True, null=True, db_column='payment_id')
 

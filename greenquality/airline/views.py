@@ -7,15 +7,23 @@ from django.http import HttpResponse
 from django.db.models import Count, Sum
 from django.db.models.functions import TruncMonth
 from django.utils import timezone
+from django.conf import settings
 from datetime import timedelta
 import csv
 import json
+import logging
+import subprocess
+import tempfile
+import os
+
+logger = logging.getLogger(__name__)
 from .models import User, Account, Role, Payment, Ticket, Flight, Passenger, Airport, Class, BaggageType, Baggage, Airplane, AuditLog
 from .admin_views import (
     admin_panel, admin_crud, admin_get_record, admin_get_options,
     manager_panel, manager_crud, manager_get_record, manager_get_options
 )
 from .exceptions_utils import get_user_friendly_message
+from . import db_reports
 from decimal import Decimal
 
 
@@ -34,7 +42,7 @@ def contacts(request):
 def flights(request):
     """Отображение страницы рейсов с данными из базы"""
     from django.utils import timezone
-    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+    from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger, Page
     from django.http import JsonResponse
     from django.template.loader import render_to_string
 
@@ -88,9 +96,24 @@ def flights(request):
     arrival_cities = Airport.objects.values_list(
         'city', flat=True).distinct().order_by('city')
 
-    # Формируем номер рейса (GQ + ID рейса)
+    # Пагинация: 10 элементов на страницу (по queryset)
+    paginator = Paginator(flights_list, 10)
+    page = request.GET.get('page', 1)
+
+    try:
+        flights_page = paginator.page(page)
+    except PageNotAnInteger:
+        flights_page = paginator.page(1)
+    except EmptyPage:
+        flights_page = paginator.page(paginator.num_pages)
+
+    # Данные из процедур БД (выручка, загрузка) только для рейсов на текущей странице
+    flight_ids = [f.id_flight for f in flights_page.object_list]
+    revenue_occupancy = db_reports.get_revenue_occupancy_for_flights(flight_ids)
+
     flights_with_numbers = []
-    for flight in flights_list:
+    for flight in flights_page.object_list:
+        rev_occ = revenue_occupancy.get(flight.id_flight, (Decimal('0'), Decimal('0')))
         flight_number_display = f"GQ{flight.id_flight:03d}"
         flights_with_numbers.append({
             'flight': flight,
@@ -98,20 +121,12 @@ def flights(request):
             'departure_airport': flight.departure_airport_id,
             'arrival_airport': flight.arrival_airport_id,
             'airplane': flight.airplane_id,
+            'revenue': rev_occ[0],
+            'occupancy': rev_occ[1],
         })
 
-    # Пагинация: 10 элементов на страницу
-    paginator = Paginator(flights_with_numbers, 10)
-    page = request.GET.get('page', 1)
-
-    try:
-        flights_page = paginator.page(page)
-    except PageNotAnInteger:
-        # Если page не является целым числом, показываем первую страницу
-        flights_page = paginator.page(1)
-    except EmptyPage:
-        # Если page выходит за пределы диапазона, показываем последнюю страницу
-        flights_page = paginator.page(paginator.num_pages)
+    # Страница с готовыми данными для таблицы (итерация по ней даёт item с .flight, .revenue и т.д.)
+    flights_page = Page(flights_with_numbers, flights_page.number, paginator)
 
     context = {
         'flights': flights_page,
@@ -343,7 +358,7 @@ def profile_view(request):
                 user.save()
             except Exception as e:
                 messages.error(request, get_user_friendly_message(e, 'save'))
-                # Возвращаем форму с сохраненными данными при ошибке
+                # Возвращаем форму с сохраненными данными при ошибке (контекст для обычного пользователя)
                 context = {
                     'user': user,
                     'account': account,
@@ -354,6 +369,11 @@ def profile_view(request):
                     'phone': phone if phone else (user.phone or ''),
                     'passport_number': passport_number if passport_number else (user.passport_number or ''),
                     'birthday': birthday if birthday else (user.birthday.strftime('%d.%m.%Y') if user.birthday else ''),
+                    'is_admin': False,
+                    'is_manager': False,
+                    'tickets': [],
+                    'total_tickets': 0,
+                    'user_payments_30d': Decimal('0'),
                 }
                 return render(request, 'profile.html', context)
 
@@ -363,7 +383,7 @@ def profile_view(request):
                 if Account.objects.filter(email=email).exclude(id_account=account_id).exists():
                     messages.error(
                         request, 'Пользователь с таким email уже существует')
-                    # Возвращаем форму с сохраненными данными при ошибке
+                    # Возвращаем форму с сохраненными данными при ошибке (контекст для обычного пользователя)
                     context = {
                         'user': user,
                         'account': account,
@@ -374,6 +394,11 @@ def profile_view(request):
                         'phone': phone if phone else (user.phone or ''),
                         'passport_number': passport_number if passport_number else (user.passport_number or ''),
                         'birthday': birthday if birthday else (user.birthday.strftime('%d.%m.%Y') if user.birthday else ''),
+                        'is_admin': False,
+                        'is_manager': False,
+                        'tickets': [],
+                        'total_tickets': 0,
+                        'user_payments_30d': Decimal('0'),
                     }
                     return render(request, 'profile.html', context)
                 else:
@@ -385,15 +410,17 @@ def profile_view(request):
             messages.success(request, 'Профиль успешно обновлен')
             return redirect('profile')
 
-        # Проверяем роль пользователя
-        is_admin = account.role_id and account.role_id.role_name == 'ADMIN'
-        is_manager = account.role_id and account.role_id.role_name == 'MANAGER'
+        # Проверяем роль пользователя (безопасно при отсутствии или удалённой роли)
+        try:
+            role_name = account.role_id.role_name if getattr(account, 'role_id', None) else None
+        except Exception:
+            role_name = None
+        is_admin = role_name == 'ADMIN'
+        is_manager = role_name == 'MANAGER'
 
         if is_admin:
             # Статистика для администратора
             from django.db.models import Count, Sum, Avg
-            from django.utils import timezone
-            from datetime import timedelta
 
             # Статистика по пользователям
             total_users = User.objects.count()
@@ -450,6 +477,11 @@ def profile_view(request):
                 ticket_count=Count('ticket')
             ).order_by('-ticket_count')[:5]
 
+            # Данные для вкладки «Отчётность»
+            flights_report = db_reports.get_flights_report(limit=100)
+            airports_report = db_reports.get_airports_revenue_report()
+            audit_report = db_reports.get_audit_operations_report()
+
             context = {
                 'user': user,
                 'account': account,
@@ -481,14 +513,16 @@ def profile_view(request):
                 'recent_tickets': recent_tickets,
                 'recent_revenue': recent_revenue,
                 'popular_routes': popular_routes,
+                # Отчётность
+                'flights_report': flights_report,
+                'airports_report': airports_report,
+                'audit_report': audit_report,
+                'show_audit': True,
             }
         elif is_manager:
             # Статистика для менеджера
-            # Импортируем необходимые функции для статистики
             from django.db.models import Count, Sum
             from django.db.models.functions import TruncMonth
-            from django.utils import timezone
-            from datetime import timedelta
 
             # Статистика по статусам билетов для круговой диаграммы
             ticket_statuses = Ticket.objects.values('status').annotate(
@@ -569,6 +603,11 @@ def profile_view(request):
             # Подсчитываем общее количество билетов для боковой панели
             total_tickets_count = Ticket.objects.count()
 
+            # Данные для вкладки «Отчётность»
+            flights_report = db_reports.get_flights_report(limit=100)
+            airports_report = db_reports.get_airports_revenue_report()
+            audit_report = []
+
             context = {
                 'user': user,
                 'account': account,
@@ -583,9 +622,14 @@ def profile_view(request):
                 'total_tickets': total_tickets_count,
                 'ticket_status_data': json.dumps(ticket_status_data, ensure_ascii=False),
                 'revenue_data': json.dumps(revenue_data, ensure_ascii=False),
+                # Отчётность
+                'flights_report': flights_report,
+                'airports_report': airports_report,
+                'audit_report': audit_report,
+                'show_audit': False,
             }
         else:
-            # История покупок для обычных пользователей
+            # История покупок для обычных пользователей + сумма платежей за период (процедура БД)
             payments = Payment.objects.filter(
                 user_id=user).order_by('-payment_date')
 
@@ -606,6 +650,15 @@ def profile_view(request):
 
             tickets.sort(key=lambda x: x['payment'].payment_date, reverse=True)
 
+            date_to = timezone.now()
+            date_from_30 = date_to - timedelta(days=30)
+            try:
+                user_payments_30d = db_reports.get_user_payments_in_period(
+                    user.id_user, date_from_30, date_to
+                )
+            except Exception:
+                user_payments_30d = Decimal('0')
+
             context = {
                 'user': user,
                 'account': account,
@@ -617,8 +670,10 @@ def profile_view(request):
                 'passport_number': user.passport_number or '',
                 'birthday': user.birthday.strftime('%d.%m.%Y') if user.birthday else '',
                 'is_admin': False,
+                'is_manager': False,
                 'tickets': tickets,
                 'total_tickets': len(tickets),
+                'user_payments_30d': user_payments_30d,
             }
 
         return render(request, 'profile.html', context)
@@ -627,9 +682,18 @@ def profile_view(request):
         messages.error(request, 'Аккаунт не найден')
         return redirect('login')
     except Exception as e:
-        # Логируем полную ошибку для отладки
+        logger.exception('Ошибка при открытии профиля: %s', e)
         messages.error(request, get_user_friendly_message(e, 'load'))
         return redirect('index')
+
+
+def reports_view(request):
+    """Перенаправление на профиль с открытой вкладкой «Отчётность»."""
+    if 'account_id' not in request.session:
+        messages.error(request, 'Для доступа необходимо войти в систему')
+        return redirect('login')
+    from urllib.parse import urlencode
+    return redirect('profile' + '?' + urlencode({'tab': 'reports'}))
 
 
 def export_statistics(request, format_type):
@@ -746,6 +810,155 @@ def export_statistics(request, format_type):
     except Exception as e:
         messages.error(request, get_user_friendly_message(e, 'export'))
         return redirect('profile')
+
+
+def backup_database(request):
+    """Создание резервной копии БД (только для администратора)"""
+    if 'account_id' not in request.session:
+        messages.error(request, 'Для доступа необходимо войти в систему')
+        return redirect('login')
+
+    try:
+        account = Account.objects.get(id_account=request.session['account_id'])
+        if not account.role_id or account.role_id.role_name != 'ADMIN':
+            messages.error(request, 'Доступ только для администратора')
+            return redirect('profile')
+
+        db = settings.DATABASES['default']
+        dbname = db['NAME']
+        user = db['USER']
+        password = db.get('PASSWORD', '')
+        host = db.get('HOST', 'localhost')
+        port = db.get('PORT', '5432')
+
+        env = os.environ.copy()
+        if password:
+            env['PGPASSWORD'] = str(password)
+        env['PGCLIENTENCODING'] = 'UTF8'
+
+        pg_bin = getattr(settings, 'PG_BIN_PATH', '') or ''
+        pg_dump_cmd = os.path.join(pg_bin, 'pg_dump.exe' if os.name == 'nt' else 'pg_dump') if pg_bin else 'pg_dump'
+
+        result = subprocess.run(
+            [pg_dump_cmd, '-U', user, '-h', host, '-p', str(port), '-F', 'p',
+             '--clean', '--if-exists', '--no-owner', '--no-acl', dbname],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=120,
+            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0,
+        )
+
+        if result.returncode != 0:
+            raise Exception(result.stderr or result.stdout or 'Ошибка pg_dump')
+
+        content = (result.stdout or '').encode('utf-8')
+        filename = f'greenquality_backup_{timezone.now().strftime("%Y%m%d_%H%M%S")}.sql'
+        response = HttpResponse(content, content_type='application/sql; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    except Account.DoesNotExist:
+        messages.error(request, 'Аккаунт не найден')
+        return redirect('login')
+    except subprocess.TimeoutExpired:
+        messages.error(request, 'Превышено время ожидания при создании резервной копии')
+        return redirect('profile')
+    except FileNotFoundError:
+        messages.error(
+            request,
+            'pg_dump не найден. Добавьте PG_BIN_PATH в .env (например: PG_BIN_PATH=C:\\Program Files\\PostgreSQL\\18\\bin)'
+        )
+        return redirect('profile')
+    except Exception as e:
+        messages.error(request, f'Ошибка создания резервной копии: {str(e)}')
+        return redirect('profile')
+
+
+def restore_database(request):
+    """Восстановление БД из резервной копии (только для администратора)"""
+    if 'account_id' not in request.session:
+        messages.error(request, 'Для доступа необходимо войти в систему')
+        return redirect('login')
+
+    if request.method != 'POST':
+        return redirect('profile')
+
+    try:
+        account = Account.objects.get(id_account=request.session['account_id'])
+        if not account.role_id or account.role_id.role_name != 'ADMIN':
+            messages.error(request, 'Доступ только для администратора')
+            return redirect('profile')
+
+        backup_file = request.FILES.get('backup_file')
+        if not backup_file:
+            messages.error(request, 'Выберите файл резервной копии (.sql)')
+            return redirect('profile')
+
+        if not backup_file.name.endswith('.sql'):
+            messages.error(request, 'Файл должен иметь расширение .sql')
+            return redirect('profile')
+
+        db = settings.DATABASES['default']
+        dbname = db['NAME']
+        user = db['USER']
+        password = db.get('PASSWORD', '')
+        host = db.get('HOST', 'localhost')
+        port = db.get('PORT', '5432')
+
+        env = os.environ.copy()
+        if password:
+            env['PGPASSWORD'] = str(password)
+        env['PGCLIENTENCODING'] = 'UTF8'
+
+        pg_bin = getattr(settings, 'PG_BIN_PATH', '') or ''
+        psql_cmd = os.path.join(pg_bin, 'psql.exe' if os.name == 'nt' else 'psql') if pg_bin else 'psql'
+
+        with tempfile.NamedTemporaryFile(mode='wb', suffix='.sql', delete=False) as tmp:
+            for chunk in backup_file.chunks():
+                tmp.write(chunk)
+            tmp_path = tmp.name
+
+        try:
+            from django.db import connection
+            connection.close()
+
+            result = subprocess.run(
+                [psql_cmd, '-U', user, '-h', host, '-p', str(port), '-d', dbname,
+                 '-f', tmp_path, '-v', 'ON_ERROR_STOP=1'],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=300,
+                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0,
+            )
+
+            if result.returncode != 0:
+                err_msg = result.stderr or result.stdout or 'Ошибка восстановления'
+                raise Exception(err_msg[:500])
+
+            messages.success(request, 'База данных успешно восстановлена')
+        finally:
+            if os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+
+    except Account.DoesNotExist:
+        messages.error(request, 'Аккаунт не найден')
+        return redirect('login')
+    except subprocess.TimeoutExpired:
+        messages.error(request, 'Превышено время ожидания при восстановлении')
+        return redirect('profile')
+    except FileNotFoundError:
+        messages.error(
+            request,
+            'psql не найден. Добавьте PG_BIN_PATH в .env (например: PG_BIN_PATH=C:\\Program Files\\PostgreSQL\\18\\bin)'
+        )
+        return redirect('profile')
+    except Exception as e:
+        messages.error(request, f'Ошибка восстановления: {str(e)}')
+        return redirect('profile')
+
+    return redirect('profile')
 
 
 def buy_ticket(request, flight_id):
@@ -967,6 +1180,11 @@ def buy_ticket_confirm(request, flight_id):
                 request, 'Это место уже занято. Пожалуйста, выберите другое место.')
             return redirect('buy_ticket_seat', flight_id=flight_id)
 
+        # Ищем существующий свободный билет (созданный триггером при добавлении рейса)
+        existing_ticket = Ticket.objects.filter(
+            flight_id=flight, seat_number=seat_number, status='AVAILABLE'
+        ).first()
+
         # Рассчитываем цену (базовая цена зависит от класса)
         base_prices = {
             'ECONOMY': Decimal('5000.00'),
@@ -1015,16 +1233,25 @@ def buy_ticket_confirm(request, flight_id):
                 status='COMPLETED',  # Пока автоматически завершаем платеж
             )
 
-            # Создаем билет
-            ticket = Ticket.objects.create(
-                flight_id=flight,
-                class_id=class_obj,
-                seat_number=seat_number,
-                price=total_price,
-                status='PAID',
-                passenger_id=passenger,
-                payment_id=payment,
-            )
+            # Обновляем существующий билет или создаём новый (для старых рейсов без триггера)
+            if existing_ticket:
+                existing_ticket.class_id = class_obj
+                existing_ticket.price = total_price
+                existing_ticket.status = 'PAID'
+                existing_ticket.passenger_id = passenger
+                existing_ticket.payment_id = payment
+                existing_ticket.save()
+                ticket = existing_ticket
+            else:
+                ticket = Ticket.objects.create(
+                    flight_id=flight,
+                    class_id=class_obj,
+                    seat_number=seat_number,
+                    price=total_price,
+                    status='PAID',
+                    passenger_id=passenger,
+                    payment_id=payment,
+                )
 
             # Создаем багаж, если выбран
             if baggage_type_id:

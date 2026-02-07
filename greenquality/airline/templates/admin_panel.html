@@ -11,11 +11,13 @@
     </div>
 
     {% if messages %}
-        <div class="messages-container">
+        <div class="admin-notifications">
             {% for message in messages %}
                 {% if message.message != "Вы успешно вошли в систему!" %}
-                    <div class="message message-{{ message.tags }}">
-                        {{ message }}
+                    <div class="admin-notification admin-notification-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+                        <span class="admin-notification-icon">{% if message.tags == 'error' %}⚠{% elif message.tags == 'success' %}✓{% else %}ℹ{% endif %}</span>
+                        <span class="admin-notification-text">{{ message }}</span>
+                        <button type="button" class="admin-notification-close" onclick="this.parentElement.remove()">&times;</button>
                     </div>
                 {% endif %}
             {% endfor %}
@@ -281,6 +283,48 @@
                     </tbody>
                 </table>
             </div>
+
+            {% if page_obj and page_obj.paginator.num_pages > 1 %}
+            <div class="admin-pagination">
+                <div class="admin-pagination-info">
+                    Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+                    (всего {{ page_obj.paginator.count }} записей)
+                </div>
+                <div class="admin-pagination-controls">
+                    {% if page_obj.has_previous %}
+                        <a href="?table={{ selected_table }}{% if sort_by %}&sort_by={{ sort_by }}&order={{ sort_order }}{% endif %}&page={{ page_obj.previous_page_number }}" class="admin-pagination-btn">← Назад</a>
+                    {% else %}
+                        <span class="admin-pagination-btn disabled">← Назад</span>
+                    {% endif %}
+
+                    <div class="admin-pagination-numbers">
+                        {% if page_range_display.0 > 1 %}
+                            <a href="?table={{ selected_table }}{% if sort_by %}&sort_by={{ sort_by }}&order={{ sort_order }}{% endif %}&page=1" class="admin-pagination-num">1</a>
+                            {% if page_range_display.0 > 2 %}<span class="admin-pagination-ellipsis">…</span>{% endif %}
+                        {% endif %}
+                        {% for page_num in page_range_display %}
+                            {% if page_num == page_obj.number %}
+                                <span class="admin-pagination-num active">{{ page_num }}</span>
+                            {% else %}
+                                <a href="?table={{ selected_table }}{% if sort_by %}&sort_by={{ sort_by }}&order={{ sort_order }}{% endif %}&page={{ page_num }}" class="admin-pagination-num">{{ page_num }}</a>
+                            {% endif %}
+                        {% endfor %}
+                        {% if page_range_display|last < page_obj.paginator.num_pages %}
+                            {% with last_displayed=page_range_display|last total=page_obj.paginator.num_pages %}
+                            {% if last_displayed < total|add:"-1" %}<span class="admin-pagination-ellipsis">…</span>{% endif %}
+                            <a href="?table={{ selected_table }}{% if sort_by %}&sort_by={{ sort_by }}&order={{ sort_order }}{% endif %}&page={{ page_obj.paginator.num_pages }}" class="admin-pagination-num">{{ page_obj.paginator.num_pages }}</a>
+                            {% endwith %}
+                        {% endif %}
+                    </div>
+
+                    {% if page_obj.has_next %}
+                        <a href="?table={{ selected_table }}{% if sort_by %}&sort_by={{ sort_by }}&order={{ sort_order }}{% endif %}&page={{ page_obj.next_page_number }}" class="admin-pagination-btn">Вперёд →</a>
+                    {% else %}
+                        <span class="admin-pagination-btn disabled">Вперёд →</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
         </main>
     </div>
 </div>
@@ -331,6 +375,84 @@
 .admin-header p {
     color: var(--text-muted, #7f8c8d);
     font-size: 18px;
+}
+
+/* Уведомления (ошибки, успех) */
+.admin-notifications {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 420px;
+}
+
+.admin-notification {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    font-size: 15px;
+    font-weight: 500;
+    animation: admin-notification-in 0.3s ease;
+}
+
+@keyframes admin-notification-in {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.admin-notification-error {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+    border: 2px solid #e74c3c;
+    color: #c0392b;
+}
+
+.admin-notification-success {
+    background: linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%);
+    border: 2px solid #0bda51;
+    color: #2e7d32;
+}
+
+.admin-notification-info {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+    border: 2px solid #3498db;
+    color: #1976d2;
+}
+
+.admin-notification-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.admin-notification-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.admin-notification-close {
+    background: none;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    opacity: 0.6;
+    padding: 0;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.admin-notification-close:hover {
+    opacity: 1;
 }
 
 .admin-panel-wrapper {
@@ -522,6 +644,90 @@
     color: var(--text-muted, #7f8c8d);
 }
 
+/* Пагинация */
+.admin-pagination {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 2px solid var(--border-color, #e1e8ed);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+}
+
+.admin-pagination-info {
+    color: var(--text-muted, #7f8c8d);
+    font-size: 14px;
+}
+
+.admin-pagination-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.admin-pagination-btn {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #0bda51, #08a53d);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.admin-pagination-btn:hover:not(.disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(11, 218, 81, 0.3);
+}
+
+.admin-pagination-btn.disabled {
+    background: var(--bg-secondary, #e9ecef);
+    color: var(--text-muted, #95a5a6);
+    cursor: default;
+}
+
+.admin-pagination-numbers {
+    display: flex;
+    gap: 5px;
+}
+
+.admin-pagination-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 8px;
+    background: var(--bg-secondary, #f8f9fa);
+    color: var(--text-secondary, #2c3e50);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.admin-pagination-num:hover {
+    background: #0bda51;
+    color: white;
+}
+
+.admin-pagination-num.active {
+    background: linear-gradient(135deg, #0bda51, #08a53d);
+    color: white;
+}
+
+.admin-pagination-ellipsis {
+    display: inline-flex;
+    align-items: center;
+    padding: 0 6px;
+    color: var(--text-muted, #7f8c8d);
+    font-weight: 600;
+}
+
 /* Модальное окно */
 .modal {
     display: none;
@@ -537,11 +743,13 @@
 
 .modal-content {
     background-color: var(--bg-color, white);
-    margin: 5% auto;
+    margin: 3% auto;
     padding: 30px;
     border-radius: 20px;
     width: 90%;
     max-width: 600px;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 10px 40px var(--shadow-color, rgba(0, 0, 0, 0.3));
     position: relative;
     transition: background-color 0.3s ease;
@@ -746,12 +954,13 @@ const modelFields = {
         'seat_number': {type: 'text', label: 'Номер места', required: true},
         'price': {type: 'number', label: 'Цена', required: true, step: '0.01'},
         'status': {type: 'select', label: 'Статус', required: true, choices: [
+            ['AVAILABLE', 'Свободен'],
             ['BOOKED', 'Забронирован'],
             ['PAID', 'Оплачен'],
             ['CHECKED_IN', 'Зарегистрирован'],
             ['CANCELLED', 'Отменен']
         ]},
-        'passenger_id': {type: 'select', label: 'Пассажир', required: true, model: 'Passenger'},
+        'passenger_id': {type: 'select', label: 'Пассажир', required: false, model: 'Passenger'},
         'payment_id': {type: 'select', label: 'Платеж', required: false, model: 'Payment'}
     },
     'BaggageType': {
@@ -973,12 +1182,6 @@ function closeModal() {
     document.getElementById('recordModal').style.display = 'none';
 }
 
-// Закрытие модального окна при клике вне его
-window.onclick = function(event) {
-    const modal = document.getElementById('recordModal');
-    if (event.target == modal) {
-        closeModal();
-    }
-}
+// Не закрывать модальное окно при клике вне его (только по кнопке X или Отмена)
 </script>
 {% endblock %}

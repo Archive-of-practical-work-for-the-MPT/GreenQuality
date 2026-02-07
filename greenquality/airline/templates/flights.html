@@ -294,6 +294,10 @@ document.addEventListener('DOMContentLoaded', function() {
                         <th>Вылет</th>
                         <th>Прибытие</th>
                         <th>Статус</th>
+                        {% if is_admin or is_manager %}
+                        <th>Выручка</th>
+                        {% endif %}
+                        <th>Загрузка %</th>
                         <th>Терминал</th>
                         <th>Действия</th>
                     </tr>
