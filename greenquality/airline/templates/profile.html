@@ -420,7 +420,11 @@
                                 {% csrf_token %}
                                 <div class="form-group">
                                     <label for="backup_file">Файл резервной копии (.sql)</label>
-                                    <input type="file" id="backup_file" name="backup_file" accept=".sql" required>
+                                    <div class="file-input-wrapper">
+                                        <input type="file" id="backup_file" name="backup_file" accept=".sql" required class="file-input-native">
+                                        <span class="file-input-btn">Выберите файл</span>
+                                        <span class="file-input-filename">Файл не выбран</span>
+                                    </div>
                                 </div>
                                 <button type="submit" class="restore-btn">Восстановить базу данных</button>
                             </form>
@@ -1411,8 +1415,8 @@
 }
 
 .backup-section.restore-section {
-    border-color: #fff3cd;
-    background: #fffbf0;
+    border-color: var(--restore-border, #e6d9b8);
+    background: var(--restore-bg, #fffbf0);
 }
 
 .backup-hint, .backup-warning {
@@ -1423,8 +1427,17 @@
 }
 
 .backup-warning {
-    color: #856404;
+    color: var(--restore-warning-text, #856404);
     font-weight: 500;
+}
+
+[data-theme="dark"] .backup-section.restore-section {
+    border-color: rgba(230, 162, 60, 0.4);
+    background: rgba(230, 162, 60, 0.08);
+}
+
+[data-theme="dark"] .backup-warning {
+    color: #e6a23c;
 }
 
 .backup-btn {
@@ -1454,12 +1467,48 @@
     margin-bottom: 20px;
 }
 
-.restore-form input[type="file"] {
-    padding: 12px;
-    border: 2px solid var(--border-color, #e1e8ed);
+.file-input-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 46px;
+}
+
+.file-input-native {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.file-input-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px;
+    background: linear-gradient(45deg, #0bda51, #08a53d);
+    color: #fff;
     border-radius: 10px;
-    background: var(--bg-color, white);
+    font-size: 15px;
+    font-weight: 600;
+    pointer-events: none;
+    box-shadow: 0 4px 14px rgba(11, 218, 81, 0.3);
+    transition: box-shadow 0.2s ease;
+}
+
+.file-input-wrapper:focus-within .file-input-btn {
+    box-shadow: 0 0 0 3px rgba(11, 218, 81, 0.35);
+}
+
+.file-input-filename {
+    color: var(--text-muted);
     font-size: 14px;
+    pointer-events: none;
 }
 
 .restore-btn {
@@ -1553,6 +1602,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (passportInput) {
         passportInput.addEventListener('input', function(e) {
             e.target.value = e.target.value.replace(/[^\d\s]/g, '');
+        });
+    }
+    // Имя выбранного файла в форме восстановления
+    const backupFileInput = document.getElementById('backup_file');
+    const fileInputFilename = document.querySelector('.file-input-filename');
+    if (backupFileInput && fileInputFilename) {
+        backupFileInput.addEventListener('change', function() {
+            fileInputFilename.textContent = this.files && this.files[0] ? this.files[0].name : 'Файл не выбран';
         });
     }
 

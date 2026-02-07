@@ -863,15 +863,15 @@ def backup_database(request):
              '--clean', '--if-exists', '--no-owner', '--no-acl', dbname],
             env=env,
             capture_output=True,
-            text=True,
             timeout=120,
             creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0,
         )
 
         if result.returncode != 0:
-            raise Exception(result.stderr or result.stdout or 'Ошибка pg_dump')
+            err = (result.stderr or result.stdout or b'')
+            raise Exception(err.decode('utf-8', errors='replace'))
 
-        content = (result.stdout or '').encode('utf-8')
+        content = result.stdout or b''
         filename = f'greenquality_backup_{timezone.now().strftime("%Y%m%d_%H%M%S")}.sql'
         response = HttpResponse(content, content_type='application/sql; charset=utf-8')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
@@ -947,14 +947,14 @@ def restore_database(request):
                  '-f', tmp_path, '-v', 'ON_ERROR_STOP=1'],
                 env=env,
                 capture_output=True,
-                text=True,
                 timeout=300,
                 creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0,
             )
 
             if result.returncode != 0:
-                err_msg = result.stderr or result.stdout or 'Ошибка восстановления'
-                raise Exception(err_msg[:500])
+                err_raw = result.stderr or result.stdout or b''
+                err_msg = err_raw.decode('utf-8', errors='replace')[:500]
+                raise Exception(err_msg)
 
             messages.success(request, 'База данных успешно восстановлена')
         finally:
