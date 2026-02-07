@@ -23,7 +23,7 @@
                     <li><a href="{% url 'about' %}">О нас</a></li>
                     <li><a href="{% url 'flights' %}">Рейсы</a></li>
                     <li><a href="{% url 'contacts' %}">Контакты</a></li>
-                    {% if request.session.account_id %}
+                        {% if request.session.account_id %}
                         <li><a href="{% url 'profile' %}">Профиль</a></li>
                         {% if is_admin %}
                             <li><a href="{% url 'admin_panel' %}">Панель</a></li>
@@ -167,6 +167,7 @@
                 profile: "{% url 'profile' %}",
                 admin_panel: "{% url 'admin_panel' %}",
                 manager_panel: "{% url 'manager_panel' %}",
+                reports: "{% url 'reports' %}",
                 export_csv: "{% url 'export_statistics' 'csv' %}",
                 export_pdf: "{% url 'export_statistics' 'pdf' %}",
                 login: "{% url 'login' %}",

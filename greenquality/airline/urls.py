@@ -21,6 +21,7 @@ urlpatterns = [
     path('manager-panel/crud/', views.manager_crud, name='manager_crud'),
     path('manager-panel/get-record/', views.manager_get_record, name='manager_get_record'),
     path('manager-panel/get-options/', views.manager_get_options, name='manager_get_options'),
+    path('reports/', views.reports_view, name='reports'),
     path('profile/export/<str:format_type>/', views.export_statistics, name='export_statistics'),
     path('profile/backup/', views.backup_database, name='backup_database'),
     path('profile/restore/', views.restore_database, name='restore_database'),

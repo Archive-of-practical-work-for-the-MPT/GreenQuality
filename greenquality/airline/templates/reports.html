@@ -1,0 +1,402 @@
+{% extends 'base.html' %}
+
+{% block title %}Отчётность | GreenQuality Airlines{% endblock %}
+
+{% block content %}
+<div class="reports-page">
+    <header class="reports-header">
+        <div class="reports-header-content">
+            <h1 class="reports-title">Отчётность</h1>
+            <p class="reports-subtitle">Данные из представлений и процедур базы данных</p>
+        </div>
+    </header>
+
+    {% if messages %}
+        <div class="reports-notifications">
+            {% for message in messages %}
+                <div class="reports-notification reports-notification-{% if message.tags == 'error' %}error{% elif message.tags == 'success' %}success{% else %}info{% endif %}">
+                    <span class="reports-notification-text">{{ message }}</span>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <div class="reports-body">
+        <!-- 1. Отчёт по рейсам -->
+        <section class="report-card">
+            <div class="report-card-header">
+                <h2 class="report-card-title">
+                    <span class="report-card-icon">✈️</span>
+                    Отчёт по рейсам
+                </h2>
+                <span class="report-card-badge">v_flights_report</span>
+            </div>
+            <div class="report-table-wrap">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>ID рейса</th>
+                            <th>Вылет</th>
+                            <th>Прилёт</th>
+                            <th>Статус</th>
+                            <th>Откуда</th>
+                            <th>Куда</th>
+                            <th>Мест</th>
+                            <th>Занято</th>
+                            <th>Выручка (₽)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in flights_report %}
+                            <tr>
+                                <td><strong>{{ row.id_flight }}</strong></td>
+                                <td>{{ row.departure_time|date:"d.m.Y H:i" }}</td>
+                                <td>{{ row.arrival_time|date:"d.m.Y H:i" }}</td>
+                                <td><span class="report-status">{{ row.flight_status }}</span></td>
+                                <td>{{ row.departure_city }} <span class="report-code">({{ row.departure_airport_code }})</span></td>
+                                <td>{{ row.arrival_city }} <span class="report-code">({{ row.arrival_airport_code }})</span></td>
+                                <td>{{ row.total_seats }}</td>
+                                <td>{{ row.occupied_seats }}</td>
+                                <td class="report-money">{{ row.revenue|floatformat:0 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="9" class="report-empty">Нет данных. Убедитесь, что представление v_flights_report создано (procedures_views.sql).</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 2. Выручка по аэропортам -->
+        <section class="report-card">
+            <div class="report-card-header">
+                <h2 class="report-card-title">
+                    <span class="report-card-icon">🏢</span>
+                    Выручка по аэропортам
+                </h2>
+                <span class="report-card-badge">v_airports_revenue_report</span>
+            </div>
+            <div class="report-table-wrap">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Код</th>
+                            <th>Аэропорт</th>
+                            <th>Город</th>
+                            <th>Страна</th>
+                            <th>Вылеты (₽)</th>
+                            <th>Прилёты (₽)</th>
+                            <th>Всего (₽)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in airports_report %}
+                            <tr>
+                                <td><strong>{{ row.id_airport }}</strong></td>
+                                <td>{{ row.airport_name }}</td>
+                                <td>{{ row.city }}</td>
+                                <td>{{ row.country }}</td>
+                                <td class="report-money">{{ row.revenue_departures|floatformat:0 }}</td>
+                                <td class="report-money">{{ row.revenue_arrivals|floatformat:0 }}</td>
+                                <td class="report-money report-total">{{ row.revenue_total|floatformat:0 }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="7" class="report-empty">Нет данных. Убедитесь, что представление v_airports_revenue_report создано.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 3. Операции аудита (только для администратора) -->
+        {% if show_audit %}
+        <section class="report-card report-card-audit">
+            <div class="report-card-header">
+                <h2 class="report-card-title">
+                    <span class="report-card-icon">📋</span>
+                    Журнал аудита
+                </h2>
+                <span class="report-card-badge">v_audit_operations_report</span>
+            </div>
+            <div class="report-table-wrap">
+                <table class="report-table">
+                    <thead>
+                        <tr>
+                            <th>Таблица</th>
+                            <th>Операция</th>
+                            <th>Количество</th>
+                            <th>Первая запись</th>
+                            <th>Последняя запись</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in audit_report %}
+                            <tr>
+                                <td><strong>{{ row.table_name }}</strong></td>
+                                <td><span class="report-op report-op-{{ row.operation|lower }}">{{ row.operation }}</span></td>
+                                <td>{{ row.operations_count }}</td>
+                                <td>{{ row.first_at|date:"d.m.Y H:i" }}</td>
+                                <td>{{ row.last_at|date:"d.m.Y H:i" }}</td>
+                            </tr>
+                        {% empty %}
+                            <tr><td colspan="5" class="report-empty">Нет данных. Убедитесь, что представление v_audit_operations_report создано.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </section>
+        {% endif %}
+
+        <div class="reports-footer">
+            <a href="{% url 'profile' %}" class="reports-back-link">
+                <span class="reports-back-arrow">←</span> Вернуться в профиль
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.reports-page {
+    min-height: calc(100vh - 180px);
+    padding: 24px 20px 48px;
+    background: linear-gradient(160deg, var(--bg-gradient-start, #f5f7fa) 0%, var(--bg-gradient-end, #e4edf5) 100%);
+    transition: background 0.3s ease;
+}
+
+.reports-header {
+    max-width: 1200px;
+    margin: 0 auto 32px;
+    text-align: center;
+    padding: 32px 24px;
+    background: linear-gradient(135deg, var(--bg-color, #fff) 0%, var(--bg-secondary, #f8f9fa) 100%);
+    border-radius: 20px;
+    box-shadow: 0 8px 32px var(--shadow-color, rgba(0,0,0,0.08));
+    border: 1px solid rgba(11, 218, 81, 0.15);
+}
+
+.reports-title {
+    color: var(--text-secondary, #2c3e50);
+    font-size: 32px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+}
+
+.reports-subtitle {
+    color: var(--text-muted, #7f8c8d);
+    font-size: 16px;
+    margin: 0;
+}
+
+.reports-notifications {
+    max-width: 1200px;
+    margin: 0 auto 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.reports-notification {
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.reports-notification-error {
+    background: linear-gradient(135deg, #fff5f5 0%, #ffe8e8 100%);
+    border: 1px solid #e74c3c;
+    color: #c0392b;
+}
+
+.reports-notification-success {
+    background: linear-gradient(135deg, #f0fff4 0%, #e8f5e9 100%);
+    border: 1px solid #0bda51;
+    color: #2e7d32;
+}
+
+.reports-notification-info {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
+    border: 1px solid #3498db;
+    color: #1976d2;
+}
+
+.reports-body {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.report-card {
+    background: var(--bg-color, #fff);
+    border-radius: 16px;
+    box-shadow: 0 6px 24px var(--shadow-color, rgba(0,0,0,0.08));
+    margin-bottom: 28px;
+    overflow: hidden;
+    border: 1px solid var(--border-color, #e9ecef);
+    transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.report-card:hover {
+    box-shadow: 0 12px 32px var(--shadow-color, rgba(0,0,0,0.12));
+}
+
+.report-card-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, var(--bg-secondary, #f8f9fa) 0%, var(--bg-color, #fff) 100%);
+    border-bottom: 2px solid rgba(11, 218, 81, 0.25);
+}
+
+.report-card-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-secondary, #2c3e50);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.report-card-icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.report-card-badge {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted, #7f8c8d);
+    background: var(--bg-secondary, #e9ecef);
+    padding: 6px 12px;
+    border-radius: 20px;
+    letter-spacing: 0.3px;
+}
+
+.report-table-wrap {
+    overflow-x: auto;
+}
+
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.report-table thead {
+    background: linear-gradient(135deg, #0bda51 0%, #08a53d 100%);
+    color: #fff;
+}
+
+.report-table th {
+    padding: 14px 16px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.report-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
+    color: var(--text-secondary, #2c3e50);
+}
+
+.report-table tbody tr:hover {
+    background: rgba(11, 218, 81, 0.06);
+}
+
+.report-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.report-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--bg-secondary, #f0f0f0);
+    color: var(--text-secondary, #2c3e50);
+}
+
+.report-code {
+    color: var(--text-muted, #7f8c8d);
+    font-size: 12px;
+}
+
+.report-money {
+    font-weight: 600;
+    color: var(--text-secondary, #2c3e50);
+}
+
+.report-total {
+    color: #08a53d;
+    font-weight: 700;
+}
+
+.report-op {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.report-op-insert { background: #e8f5e9; color: #2e7d32; }
+.report-op-update { background: #e3f2fd; color: #1976d2; }
+.report-op-delete { background: #ffebee; color: #c62828; }
+
+.report-empty {
+    text-align: center;
+    color: var(--text-muted, #7f8c8d);
+    padding: 32px 16px !important;
+    font-style: italic;
+}
+
+.reports-footer {
+    margin-top: 32px;
+    text-align: center;
+}
+
+.reports-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--bg-color, #fff);
+    color: #0bda51;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    border-radius: 12px;
+    border: 2px solid #0bda51;
+    box-shadow: 0 4px 12px var(--shadow-color, rgba(0,0,0,0.08));
+    transition: all 0.25s ease;
+}
+
+.reports-back-link:hover {
+    background: linear-gradient(135deg, #0bda51 0%, #08a53d 100%);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(11, 218, 81, 0.35);
+}
+
+.reports-back-arrow {
+    font-size: 18px;
+}
+
+@media (max-width: 768px) {
+    .reports-page { padding: 16px 12px 32px; }
+    .reports-header { padding: 24px 16px; }
+    .reports-title { font-size: 26px; }
+    .reports-subtitle { font-size: 14px; }
+    .report-card-header { padding: 16px; flex-direction: column; align-items: flex-start; }
+    .report-card-title { font-size: 18px; }
+    .report-table th,
+    .report-table td { padding: 10px 12px; font-size: 13px; }
+}
+</style>
+{% endblock %}

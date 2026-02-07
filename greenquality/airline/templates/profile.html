@@ -63,6 +63,10 @@
                             <span class="stat-value">{{ total_tickets }}</span>
                             <span class="stat-label">Билетов</span>
                         </div>
+                        <div class="stat-item">
+                            <span class="stat-value">{{ user_payments_30d|default:0|floatformat:0 }}</span>
+                            <span class="stat-label">₽ за 30 дней</span>
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -87,6 +91,16 @@
                         </svg>
                         Статистика
                     </button>
+                    <button class="tab-button" onclick="switchTab('reports', event)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                        Отчётность
+                    </button>
                     <button class="tab-button" onclick="switchTab('backup', event)">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
@@ -103,6 +117,16 @@
                             <line x1="6" y1="20" x2="6" y2="14"></line>
                         </svg>
                         Статистика
+                    </button>
+                    <button class="tab-button" onclick="switchTab('reports', event)">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <line x1="10" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                        Отчётность
                     </button>
                 {% else %}
                     <button class="tab-button" onclick="switchTab('tickets', event)">
@@ -380,6 +404,47 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Вкладка: Отчётность (администратор) -->
+                <div id="tab-reports" class="tab-content" style="display: none;">
+                    <div class="profile-reports">
+                        <section class="profile-report-card">
+                            <h3 class="profile-report-title"><span class="profile-report-icon">✈️</span> Отчёт по рейсам</h3>
+                            <div class="profile-report-table-wrap">
+                                <table class="profile-report-table">
+                                    <thead><tr><th>ID</th><th>Вылет</th><th>Прилёт</th><th>Статус</th><th>Откуда</th><th>Куда</th><th>Мест</th><th>Занято</th><th>Выручка (₽)</th></tr></thead>
+                                    <tbody>
+                                        {% for row in flights_report %}<tr><td>{{ row.id_flight }}</td><td>{{ row.departure_time|date:"d.m.Y H:i" }}</td><td>{{ row.arrival_time|date:"d.m.Y H:i" }}</td><td>{{ row.flight_status }}</td><td>{{ row.departure_city }} ({{ row.departure_airport_code }})</td><td>{{ row.arrival_city }} ({{ row.arrival_airport_code }})</td><td>{{ row.total_seats }}</td><td>{{ row.occupied_seats }}</td><td class="profile-report-money">{{ row.revenue|floatformat:0 }}</td></tr>{% empty %}<tr><td colspan="9" class="profile-report-empty">Нет данных</td></tr>{% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                        <section class="profile-report-card">
+                            <h3 class="profile-report-title"><span class="profile-report-icon">🏢</span> Выручка по аэропортам</h3>
+                            <div class="profile-report-table-wrap">
+                                <table class="profile-report-table">
+                                    <thead><tr><th>Код</th><th>Аэропорт</th><th>Город</th><th>Страна</th><th>Вылеты (₽)</th><th>Прилёты (₽)</th><th>Всего (₽)</th></tr></thead>
+                                    <tbody>
+                                        {% for row in airports_report %}<tr><td>{{ row.id_airport }}</td><td>{{ row.airport_name }}</td><td>{{ row.city }}</td><td>{{ row.country }}</td><td class="profile-report-money">{{ row.revenue_departures|floatformat:0 }}</td><td class="profile-report-money">{{ row.revenue_arrivals|floatformat:0 }}</td><td class="profile-report-money profile-report-total">{{ row.revenue_total|floatformat:0 }}</td></tr>{% empty %}<tr><td colspan="7" class="profile-report-empty">Нет данных</td></tr>{% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                        {% if show_audit %}
+                        <section class="profile-report-card">
+                            <h3 class="profile-report-title"><span class="profile-report-icon">📋</span> Журнал аудита</h3>
+                            <div class="profile-report-table-wrap">
+                                <table class="profile-report-table">
+                                    <thead><tr><th>Таблица</th><th>Операция</th><th>Количество</th><th>Первая</th><th>Последняя</th></tr></thead>
+                                    <tbody>
+                                        {% for row in audit_report %}<tr><td>{{ row.table_name }}</td><td><span class="profile-report-op profile-report-op-{{ row.operation|lower }}">{{ row.operation }}</span></td><td>{{ row.operations_count }}</td><td>{{ row.first_at|date:"d.m.Y H:i" }}</td><td>{{ row.last_at|date:"d.m.Y H:i" }}</td></tr>{% empty %}<tr><td colspan="5" class="profile-report-empty">Нет данных</td></tr>{% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                        {% endif %}
+                    </div>
+                </div>
             {% elif is_manager %}
                 <!-- Вкладка: Статистика (для менеджера) -->
                 <div id="tab-statistics" class="tab-content" style="display: none;">
@@ -422,6 +487,34 @@
                                 <canvas id="revenueChart"></canvas>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Вкладка: Отчётность (менеджер) -->
+                <div id="tab-reports" class="tab-content" style="display: none;">
+                    <div class="profile-reports">
+                        <section class="profile-report-card">
+                            <h3 class="profile-report-title"><span class="profile-report-icon">✈️</span> Отчёт по рейсам</h3>
+                            <div class="profile-report-table-wrap">
+                                <table class="profile-report-table">
+                                    <thead><tr><th>ID</th><th>Вылет</th><th>Прилёт</th><th>Статус</th><th>Откуда</th><th>Куда</th><th>Мест</th><th>Занято</th><th>Выручка (₽)</th></tr></thead>
+                                    <tbody>
+                                        {% for row in flights_report %}<tr><td>{{ row.id_flight }}</td><td>{{ row.departure_time|date:"d.m.Y H:i" }}</td><td>{{ row.arrival_time|date:"d.m.Y H:i" }}</td><td>{{ row.flight_status }}</td><td>{{ row.departure_city }} ({{ row.departure_airport_code }})</td><td>{{ row.arrival_city }} ({{ row.arrival_airport_code }})</td><td>{{ row.total_seats }}</td><td>{{ row.occupied_seats }}</td><td class="profile-report-money">{{ row.revenue|floatformat:0 }}</td></tr>{% empty %}<tr><td colspan="9" class="profile-report-empty">Нет данных</td></tr>{% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                        <section class="profile-report-card">
+                            <h3 class="profile-report-title"><span class="profile-report-icon">🏢</span> Выручка по аэропортам</h3>
+                            <div class="profile-report-table-wrap">
+                                <table class="profile-report-table">
+                                    <thead><tr><th>Код</th><th>Аэропорт</th><th>Город</th><th>Страна</th><th>Вылеты (₽)</th><th>Прилёты (₽)</th><th>Всего (₽)</th></tr></thead>
+                                    <tbody>
+                                        {% for row in airports_report %}<tr><td>{{ row.id_airport }}</td><td>{{ row.airport_name }}</td><td>{{ row.city }}</td><td>{{ row.country }}</td><td class="profile-report-money">{{ row.revenue_departures|floatformat:0 }}</td><td class="profile-report-money">{{ row.revenue_arrivals|floatformat:0 }}</td><td class="profile-report-money profile-report-total">{{ row.revenue_total|floatformat:0 }}</td></tr>{% empty %}<tr><td colspan="7" class="profile-report-empty">Нет данных</td></tr>{% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
                     </div>
                 </div>
             {% else %}
@@ -699,6 +792,94 @@
 
 .tab-content.active {
     display: block;
+}
+
+/* Вкладка «Отчётность» */
+.profile-reports {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+}
+
+.profile-report-card {
+    background: var(--bg-secondary, #f8f9fa);
+    border-radius: 16px;
+    padding: 20px;
+    border: 1px solid var(--border-color, #e9ecef);
+}
+
+.profile-report-title {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-secondary, #2c3e50);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.profile-report-icon {
+    font-size: 22px;
+}
+
+.profile-report-table-wrap {
+    overflow-x: auto;
+}
+
+.profile-report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.profile-report-table thead {
+    background: linear-gradient(135deg, #0bda51 0%, #08a53d 100%);
+    color: #fff;
+}
+
+.profile-report-table th {
+    padding: 12px 14px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.profile-report-table td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-color, #e9ecef);
+    color: var(--text-secondary, #2c3e50);
+}
+
+.profile-report-table tbody tr:hover {
+    background: rgba(11, 218, 81, 0.06);
+}
+
+.profile-report-money {
+    font-weight: 600;
+}
+
+.profile-report-total {
+    color: #08a53d;
+    font-weight: 700;
+}
+
+.profile-report-op {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.profile-report-op-insert { background: #e8f5e9; color: #2e7d32; }
+.profile-report-op-update { background: #e3f2fd; color: #1976d2; }
+.profile-report-op-delete { background: #ffebee; color: #c62828; }
+
+.profile-report-empty {
+    text-align: center;
+    color: var(--text-muted, #7f8c8d);
+    padding: 24px !important;
+    font-style: italic;
 }
 
 .content-card {
@@ -1298,8 +1479,20 @@ function switchTab(tabName, event) {
     }
 }
 
-// Функция для форматирования даты из формата дд.мм.гггг в формат для отображения
+// Открыть вкладку из URL (?tab=reports и т.д.)
 document.addEventListener('DOMContentLoaded', function() {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get('tab');
+    if (tabParam) {
+        const tabEl = document.getElementById('tab-' + tabParam);
+        if (tabEl) {
+            const btn = document.querySelector(".tab-button[onclick*=\"switchTab('" + tabParam + "'");
+            if (btn) {
+                btn.click();
+            }
+        }
+    }
+
     const birthdayInput = document.getElementById('birthday');
     
     // Маска для ввода даты в формате дд.мм.гггг

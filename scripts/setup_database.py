@@ -130,23 +130,32 @@ def main():
         conn = psycopg2.connect(**config)
 
         if args.create or do_all:
-            step = "[2/4]" if do_all else "[1/2]"
+            step = "[2/5]" if do_all else "[1/3]"
             print(f"\n{step} Создание таблиц (create_tables.sql)...")
             run_sql_file(conn, 'create_tables.sql', 'Таблицы созданы')
             conn.commit()
 
         if args.create or do_all:
-            step = "[3/4]" if do_all else "[2/2]"
+            step = "[3/5]" if do_all else "[2/3]"
             print(f"\n{step} Создание триггеров (triggers.sql)...")
             run_sql_file(conn, 'triggers.sql', 'Триггеры созданы')
             conn.commit()
 
+        if args.create or do_all:
+            step = "[4/5]" if do_all else "[3/3]"
+            print(f"\n{step} Создание процедур и представлений (procedures_views.sql)...")
+            run_sql_file(conn, 'procedures_views.sql', 'Процедуры и представления созданы')
+            conn.commit()
+
         if args.seed or do_all:
             if args.seed and not do_all:
-                print(f"\n[1/2] Создание триггеров (triggers.sql)...")
+                print(f"\n[1/3] Создание триггеров (triggers.sql)...")
                 run_sql_file(conn, 'triggers.sql', 'Триггеры созданы')
                 conn.commit()
-            step = "[4/4]" if do_all else "[2/2]"
+                print(f"\n[2/3] Создание процедур и представлений (procedures_views.sql)...")
+                run_sql_file(conn, 'procedures_views.sql', 'Процедуры и представления созданы')
+                conn.commit()
+            step = "[5/5]" if do_all else "[3/3]"
             print(f"\n{step} Заполнение начальными данными (insert_initial_data.sql)...")
             run_sql_file(conn, 'insert_initial_data.sql', 'Данные загружены')
             conn.commit()

@@ -20,28 +20,27 @@
                     {{ item.flight.get_status_display }}
                 </span>
             </td>
+            {% if is_admin or is_manager %}
+            <td>{{ item.revenue|floatformat:0 }} ₽</td>
+            {% endif %}
+            <td>{{ item.occupancy|floatformat:1 }}%</td>
             <td>{{ item.departure_airport.id_airport|first }}</td>
             <td>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button class="details-btn" onclick="showFlightDetails({{ item.flight.id_flight }})">
-                        Подробнее
-                    </button>
-                    {% if request.session.account_id %}
-                        <a href="{% url 'buy_ticket' item.flight.id_flight %}" class="buy-btn">
-                            Купить
-                        </a>
-                    {% else %}
-                        <a href="{% url 'login' %}" class="buy-btn" title="Для покупки необходимо войти">
-                            Купить
-                        </a>
-                    {% endif %}
-                </div>
+                {% if request.session.account_id %}
+                    <a href="{% url 'buy_ticket' item.flight.id_flight %}" class="buy-btn">
+                        Купить
+                    </a>
+                {% else %}
+                    <a href="{% url 'login' %}" class="buy-btn" title="Для покупки необходимо войти">
+                        Купить
+                    </a>
+                {% endif %}
             </td>
         </tr>
     {% endfor %}
 {% else %}
     <tr>
-        <td colspan="7" style="text-align: center; padding: 40px; color: #7f8c8d;">
+        <td colspan="{% if is_admin or is_manager %}9{% else %}8{% endif %}" style="text-align: center; padding: 40px; color: #7f8c8d;">
             <p>Рейсы не найдены</p>
         </td>
     </tr>
