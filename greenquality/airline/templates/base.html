@@ -45,6 +45,17 @@
         </div>
     </header>
 
+    <!-- Окошко согласия с политикой (только при первом заходе) -->
+    <div id="privacy-consent-banner" class="privacy-consent-banner" role="dialog" aria-label="Согласие на обработку персональных данных" style="display: none;">
+        <div class="privacy-consent-content">
+            <p class="privacy-consent-text">Мы используем файлы cookie и обрабатываем персональные данные в соответствии с нашей <a href="{% url 'privacy' %}" target="_blank">политикой обработки персональных данных</a>. Продолжая использовать сайт, вы соглашаетесь с этими условиями.</p>
+            <div class="privacy-consent-actions">
+                <a href="{% url 'privacy' %}" class="privacy-consent-link" target="_blank">Политика конфиденциальности</a>
+                <button type="button" class="privacy-consent-btn" id="privacyConsentBtn">Согласиться</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Основное содержимое -->
     <main class="main-content">
         {% block content %}
@@ -164,6 +175,7 @@
                 about: "{% url 'about' %}",
                 flights: "{% url 'flights' %}",
                 contacts: "{% url 'contacts' %}",
+                privacy: "{% url 'privacy' %}",
                 profile: "{% url 'profile' %}",
                 admin_panel: "{% url 'admin_panel' %}",
                 manager_panel: "{% url 'manager_panel' %}",
@@ -300,6 +312,35 @@
         .hotkeys-list li { padding: 6px 0; color: var(--text-secondary, #2c3e50); font-size: 14px; }
         .hotkeys-list kbd { display: inline-block; padding: 2px 8px; background: var(--bg-secondary, #f0f0f0); border-radius: 6px; font-family: inherit; font-size: 12px; margin: 0 2px; }
     </style>
+    <!-- Стили окошка согласия с политикой (первый заход) -->
+    <style>
+        .privacy-consent-banner { position: fixed; bottom: 20px; left: 20px; z-index: 9998; max-width: 380px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); border-radius: 20px; overflow: hidden; animation: privacy-banner-in 0.35s ease; }
+        .privacy-consent-banner.privacy-consent-hidden { display: none !important; }
+        @keyframes privacy-banner-in { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .privacy-consent-content { background: var(--bg-color, #fff); border: 2px solid #0bda51; padding: 20px; border-radius: 18px; }
+        .privacy-consent-text { margin: 0 0 14px 0; font-size: 14px; line-height: 1.55; color: var(--text-secondary, #2c3e50); }
+        .privacy-consent-text a { color: #0bda51; text-decoration: underline; }
+        .privacy-consent-text a:hover { color: #08a53d; }
+        .privacy-consent-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .privacy-consent-link { font-size: 13px; color: #0bda51; text-decoration: none; }
+        .privacy-consent-link:hover { text-decoration: underline; }
+        .privacy-consent-btn { background: linear-gradient(135deg, #0bda51, #08a53d); color: #fff; border: none; padding: 10px 20px; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; }
+        .privacy-consent-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(11, 218, 81, 0.4); }
+    </style>
+    <script>
+        (function() {
+            var banner = document.getElementById('privacy-consent-banner');
+            var btn = document.getElementById('privacyConsentBtn');
+            if (!banner || !btn) return;
+            if (localStorage.getItem('privacy_consent') === '1') return;
+            banner.style.display = 'block';
+            btn.addEventListener('click', function() {
+                localStorage.setItem('privacy_consent', '1');
+                banner.classList.add('privacy-consent-hidden');
+                banner.style.display = 'none';
+            });
+        })();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

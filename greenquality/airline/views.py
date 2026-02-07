@@ -40,6 +40,11 @@ def contacts(request):
     return render(request, 'contacts.html')
 
 
+def privacy(request):
+    """Страница политики обработки персональных данных."""
+    return render(request, 'privacy.html')
+
+
 def flights(request):
     """Отображение страницы рейсов с данными из базы"""
     from django.utils import timezone
