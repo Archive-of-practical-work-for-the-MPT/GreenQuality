@@ -76,31 +76,37 @@
     <h2 class="section-title">Специальные предложения</h2>
     <div class="offers-grid">
         <div class="offer-card">
+            <a href="{% url 'flights' %}" class="offer-card-link">
             {% load static %}
             <img src="{% static 'images/paris.jpg' %}" alt="Париж" class="card-img">
             <div class="card-content">
                 <h3>Париж со скидкой 20%</h3>
                 <p>Уникальное предложение на перелеты в Париж этой осенью. Ограниченное количество мест!</p>
-                <a href="#" class="card-link">Подробнее →</a>
+                <span class="card-link">Подробнее →</span>
             </div>
+            </a>
         </div>
         <div class="offer-card">
+            <a href="{% url 'flights' %}" class="offer-card-link">
             {% load static %}
             <img src="{% static 'images/NY.jpg' %}" alt="Нью-Йорк" class="card-img">
             <div class="card-content">
                 <h3>Нью-Йорк по специальной цене</h3>
                 <p>Путешествуйте в Нью-Йорк с нашей авиакомпанией по выгодной цене. Включены все налоги.</p>
-                <a href="#" class="card-link">Подробнее →</a>
+                <span class="card-link">Подробнее →</span>
             </div>
+            </a>
         </div>
         <div class="offer-card">
+            <a href="{% url 'flights' %}" class="offer-card-link">
             {% load static %}
             <img src="{% static 'images/japan.jpg' %}" alt="Киото" class="card-img">
             <div class="card-content">
                 <h3>Киото - эксклюзивное предложение</h3>
                 <p>Специальное предложение на бизнес-класс в Киото. Роскошный комфорт и сервис.</p>
-                <a href="#" class="card-link">Подробнее →</a>
+                <span class="card-link">Подробнее →</span>
             </div>
+            </a>
         </div>
     </div>
 
@@ -108,31 +114,37 @@
     <h2 class="section-title">Акции</h2>
     <div class="offers-grid">
         <div class="offer-card">
+            <a href="{% url 'flights' %}" class="offer-card-link">
             {% load static %}
             <img src="{% static 'images/family.jpg' %}" alt="Семья" class="card-img">
             <div class="card-content">
                 <h3>Семейные путешествия</h3>
                 <p>Скидка 30% на все перелеты для семей с детьми до 12 лет. Дети до 2 лет летают бесплатно!</p>
-                <a href="#" class="card-link">Подробнее →</a>
+                <span class="card-link">Подробнее →</span>
             </div>
+            </a>
         </div>
         <div class="offer-card">
+            <a href="{% url 'flights' %}" class="offer-card-link">
             {% load static %}
             <img src="{% static 'images/student.png' %}" alt="Студенты" class="card-img">
             <div class="card-content">
                 <h3>Для студентов</h3>
                 <p>Специальные тарифы для студентов до 26 лет. Путешествуйте по всему миру по выгодной цене!</p>
-                <a href="#" class="card-link">Подробнее →</a>
+                <span class="card-link">Подробнее →</span>
             </div>
+            </a>
         </div>
         <div class="offer-card">
+            <a href="{% url 'flights' %}" class="offer-card-link">
             {% load static %}
             <img src="{% static 'images/biznes.jpg' %}" alt="Бизнес" class="card-img">
             <div class="card-content">
                 <h3>Бизнес-путешественники</h3>
                 <p>Гибкие тарифы и дополнительные привилегии для бизнес-путешественников.</p>
-                <a href="#" class="card-link">Подробнее →</a>
+                <span class="card-link">Подробнее →</span>
             </div>
+            </a>
         </div>
     </div>
 
@@ -140,7 +152,7 @@
     <div class="bonus-program">
         <h2>Бонусная программа "Мили"</h2>
         <p>Зарабатывайте мили за каждый перелет и обменивайте их на бесплатные билеты, апгрейды и другие привилегии!</p>
-        <button class="bonus-btn">Присоединиться к программе</button>
+        <a href="{% url 'flights' %}" class="bonus-btn">Присоединиться к программе</a>
     </div>
 
     <!-- Расписание рейсов -->
@@ -184,7 +196,6 @@
             <div class="card-content">
                 <h3>Новый самолет в нашем флоте</h3>
                 <p>GreenQuality Airlines пополнила свой флот современным Airbus A350. Самые низкие уровни шума и выбросов!</p>
-                <a href="#" class="card-link">Читать далее →</a>
             </div>
         </div>
         <div class="news-card">
@@ -193,7 +204,6 @@
             <div class="card-content">
                 <h3>Награда за экологичность</h3>
                 <p>Наша авиакомпания получила международную премию за вклад в развитие экологичных технологий в авиации.</p>
-                <a href="#" class="card-link">Читать далее →</a>
             </div>
         </div>
         <div class="news-card">
@@ -202,7 +212,6 @@
             <div class="card-content">
                 <h3>Расширение маршрутов</h3>
                 <p>GreenQuality Airlines открывает новые направления в Азию и Северную Америку этим летом.</p>
-                <a href="#" class="card-link">Читать далее →</a>
             </div>
         </div>
     </div>
