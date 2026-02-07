@@ -26,6 +26,5 @@ urlpatterns = [
     path('profile/export/<str:format_type>/', views.export_statistics, name='export_statistics'),
     path('profile/backup/', views.backup_database, name='backup_database'),
     path('profile/restore/', views.restore_database, name='restore_database'),
-    # Запасной маршрут: любой неизвестный путь → наша страница 404 (работает и при DEBUG=True)
     path('<path:path>', views.page_not_found_catchall),
 ]

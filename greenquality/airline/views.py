@@ -2,10 +2,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils.dateparse import parse_date
-from django.db.models import Q
 from django.http import HttpResponse
-from django.db.models import Count, Sum
-from django.db.models.functions import TruncMonth
 from django.utils import timezone
 from django.conf import settings
 from datetime import timedelta

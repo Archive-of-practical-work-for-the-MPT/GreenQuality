@@ -1,5 +1,5 @@
 """
-Кастомный тест-раннер с подробным выводом на русском языке.
+Кастомный тест-раннер с подробным выводом.
 Подключается в settings.py: TEST_RUNNER = 'tests.test_runner.RussianDiscoverRunner'
 """
 import sys
@@ -7,7 +7,7 @@ import unittest
 from django.test.runner import DiscoverRunner
 
 
-# Краткие описания тестов на русском (если у метода нет docstring)
+# Краткие описания тестов
 ОПИСАНИЯ_ТЕСТОВ = {
     'test_airport_crud': 'CRUD для аэропорта (Airport)',
     'test_passenger_crud': 'CRUD для пассажира (Passenger)',
