@@ -18,16 +18,6 @@ GreenQuality Airlines - это современное веб-приложени�
       <img src="https://github.com/user-attachments/assets/7f9b9bb8-fa4b-4376-9b47-06cb92f89fa0" alt="Демонстрация" width="700">
 </p>
 
-## Брендбук
-
-<p align="center">
-      <img src="" alt="Демонстрация" width="700">
-</p>
-
-<p align="center">
-      <img src="" alt="Демонстрация" width="700">
-</p>
-
 ## Требования
 <details>
 <summary>Нажмите чтобы расскрыть</summary>
