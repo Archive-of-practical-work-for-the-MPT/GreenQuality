@@ -8,6 +8,17 @@
 
 GreenQuality Airlines - это современное веб-приложение для авиакомпании, разработанное с использованием фреймворка Django. Проект представляет собой полнофункциональный сайт авиакомпании с интуитивным интерфейсом и привлекательным дизайном.
 
+## Брендбук
+
+<p align="center">
+      <img src="https://github.com/user-attachments/assets/f0be8396-f120-4137-b52d-1ae32af76229" alt="Брендбук" width="400">
+      <img src="https://github.com/user-attachments/assets/07dd9a37-d379-484c-824c-62931bb7a3e5" alt="Брендбук" width="350">
+</p>
+
+<p align="center">
+      
+</p>
+
 ## Демонстрация
 
 <p align="center">
